@@ -1,37 +1,29 @@
 /**
  * Normalize a port into a number, string, or false.
  */
-
 export const normalizePort = (val: any) => {
-    let port = parseInt(val, 10);
-
+    const port = parseInt(val, 10);
     if (isNaN(port)) {
         // named pipe
         return val;
     }
-
     if (port >= 0) {
         // port number
         return port;
     }
-
     return false;
 }
-
 
 /**
 * Event listener for HTTP server "error" event.
 */
-
 export const onError = (error: any, port: any) => {
     if (error.syscall !== 'listen') {
         throw error;
     }
-
-    let bind = typeof port === 'string'
+    const bind = typeof port === 'string'
         ? 'Pipe ' + port
         : 'Port ' + port;
-
     // handle specific listen errors with friendly messages
     switch (error.code) {
         case 'EACCES':
@@ -50,10 +42,9 @@ export const onError = (error: any, port: any) => {
 /**
 * Event listener for HTTP server "listening" event.
 */
-
 export const onListening = (server: any) => {
-    let addr = server.address();
-    let bind = typeof addr === 'string'
+    const addr = server.address();
+    const bind = typeof addr === 'string'
         ? 'pipe ' + addr
         : 'port ' + addr?.port;
     console.log(`Server started on ${bind}`);
