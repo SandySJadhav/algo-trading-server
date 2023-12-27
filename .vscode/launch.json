@@ -6,7 +6,7 @@
       "request": "launch",
       "name": "Debug TypeScript in Node.js",
       "preLaunchTask": "npm: build",
-      "program": "${workspaceFolder}/src/index.ts",
+      "program": "${workspaceFolder}/src/server.ts",
       "protocol": "inspector",
       "outFiles": ["${workspaceFolder}/build/**/*.js"],
       "sourceMaps": true,

@@ -2,11 +2,11 @@
   "name": "typescript-starter",
   "version": "1.0.0",
   "description": "A basic typescript app starter for 2023.",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "build": "rimraf ./build && tsc",
-    "start:dev": "npx nodemon",
-    "start": "npm run build && node build/index.js",
+    "dev": "npx nodemon",
+    "start": "npm run build && node build/server.js",
     "lint": "eslint . --ext .ts"
   },
   "husky": {
