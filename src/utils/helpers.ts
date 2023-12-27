@@ -47,5 +47,5 @@ export const onListening = (server: any) => {
     const bind = typeof addr === 'string'
         ? 'pipe ' + addr
         : 'port ' + addr?.port;
-    console.log(`Server started on ${bind}`);
+    console.log(`Server is running on ${bind}`);
 }

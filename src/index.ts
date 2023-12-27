@@ -1,7 +1,7 @@
 import express from 'express';
 import http from 'http';
 import createHttpError from 'http-errors';
-import { normalizePort, onError, onListening } from './utils/common';
+import { normalizePort, onError, onListening } from './utils/helpers';
 
 const port = normalizePort(process.env.PORT || '3001');
 const app = express();
