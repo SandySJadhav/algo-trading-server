@@ -1,8 +1,9 @@
 import { Router } from 'express';
 import cache from '../utils/cache';
+
 const router = Router();
 
-router.get('/:id', function (req, res, next) {
+router.get('/:id', function (req, res) {
     const { id } = req.params;
     return res.status(200).json({
         status: "SUCCESS",
@@ -12,7 +13,7 @@ router.get('/:id', function (req, res, next) {
     });
 });
 
-router.post('/:id', function (req, res, next) {
+router.post('/:id', function (req, res) {
     const { id, token } = req.params;
     cache.set(id, token);
     return res.status(200).json({

@@ -49,3 +49,8 @@ export const onListening = (server: any) => {
         : 'port ' + addr?.port;
     console.log(`Server is running on ${bind}`);
 }
+
+export const generateHash = async (text: string) => {
+    const { createHash } = await import('node:crypto');
+    return createHash('sha256').update(text).digest('hex');
+}
