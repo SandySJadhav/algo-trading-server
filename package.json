@@ -41,7 +41,6 @@
     "croner": "^8.0.0",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
-    "firebase": "^10.7.1",
     "firebase-admin": "^12.0.0",
     "http-errors": "^2.0.0",
     "node-fetch": "^2.7.0",
