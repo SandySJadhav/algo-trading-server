@@ -1,4 +1,3 @@
-import cache from './cache';
 import fetch from './fetch';
 
 export const postRequest = async (url: string, body?: object, headers?: object) => {
@@ -7,12 +6,17 @@ export const postRequest = async (url: string, body?: object, headers?: object) 
             method: 'POST',
             body: body ? JSON.stringify(body) : null,
             headers: headers ?? {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${cache.get(`ant-user-session`)}`
+                'Content-Type': 'application/json'
             }
         });
-        const data = await response.json();
-        return data;
+        if (response.ok) {
+            const data = await response.json();
+            return data;
+        }
+        return {
+            statusCode: response.status,
+            status: response.statusText
+        };
     } catch (error) {
         console.log('API RESPONSE ERROR -> url ', error);
         return error;

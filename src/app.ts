@@ -1,11 +1,22 @@
 import express from 'express';
 import createHttpError from 'http-errors';
-import userRouter from './routes/user';
+import searchRouter from './routes/search';
+import cors from 'cors';
 
 const app = express();
+const corsOpts = {
+  origin: 'http://localhost:3000',
+  methods: [
+    'GET',
+    'POST',
+    'DELETE',
+    'PUT'
+  ]
+};
+app.use(cors(corsOpts))
 app.use(express.json());
 
-app.use('/user', userRouter);
+app.use('/search', searchRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
