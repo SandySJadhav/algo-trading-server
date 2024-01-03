@@ -73,11 +73,11 @@ class Angel {
         }
     }
 
-    async searchScript(searchscrip: string, exchange: string) {
-        const response = await postRequest(API.root + API.search_scrip, {exchange, searchscrip}, this.headers);
-        console.log(response);
-        return response;
-    }
+    // async searchScript(searchscrip: string, exchange: string) {
+    //     const response = await postRequest(API.root + API.search_scrip, {exchange, searchscrip}, this.headers);
+    //     console.log(response);
+    //     return response;
+    // }
 }
 
 export default Angel;

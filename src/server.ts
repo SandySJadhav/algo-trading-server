@@ -2,7 +2,7 @@ import http from 'http';
 import app from './app';
 import { normalizePort, onError, onListening } from './utils/helpers';
 import { config } from 'dotenv';
-import { createAngelInstance } from './utils/angelOne/instance';
+import createAngelInstanceAndLogin from './utils/angelOne/instance';
 import { startCronerToSyncInstruments } from './utils/firebase/base';
 config();
 
@@ -16,6 +16,8 @@ server.listen(port);
 server.on('error', (e) => onError(e, port));
 server.on('listening', async () => {
     onListening(server);
-    createAngelInstance();
+    // start daily instrument sync job
     startCronerToSyncInstruments();
+    // create angel instance and login
+    createAngelInstanceAndLogin();
 });

@@ -71,7 +71,7 @@ const processDataToFirebase = async (instruments: any) => {
     const collection = await Firebase.db.collection("instruments");
     // delete existing data from firestore if already expired
     const docs = await collection.where(
-        "expiryTimestamp",
+        "expiry_timestamp",
         "<",
         Timestamp.fromDate(new Date())
     ).get();
@@ -94,20 +94,17 @@ const processDataToFirebase = async (instruments: any) => {
                 instrumenttype,
                 exch_seg,
                 tick_size
-            }: any) => {
-                const item: any = {
-                    token,
-                    symbol,
-                    name,
-                    lotsize,
-                    instrumenttype,
-                    exch_seg,
-                    expiry,
-                    tick_size
-                };
-                item.expiryTimestamp = Timestamp.fromDate(new Date(expiry || '12DEC9999'));
-                return item;
-            });
+            }: any) => ({
+                token,
+                symbol,
+                name,
+                lotsize,
+                instrumenttype,
+                exch_seg,
+                expiry,
+                tick_size,
+                expiry_timestamp: Timestamp.fromDate(new Date(expiry || '12DEC9999'))
+            }));
         if (selectedInstruments?.length > 0) {
             console.log("Pushing NSE, NFO & MCX records to Firestore ---> Count: ", selectedInstruments.length);
             await processInstruments(selectedInstruments, collection, false);
@@ -128,8 +125,8 @@ const processDataToFirebase = async (instruments: any) => {
         * * * * * * *
  */
 export const startCronerToSyncInstruments = () => {
-    let maxRuns = 90;
-    let scheduledTimer = "0 0 5 * * 1-5";
+    let maxRuns: any = undefined;
+    let scheduledTimer: string = "0 0 5 * * 1-5";
     if (process.env.environment === 'dev') {
         maxRuns = 1;
         scheduledTimer = "* * * * * *";
