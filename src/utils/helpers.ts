@@ -47,10 +47,14 @@ export const onListening = (server: any) => {
     const bind = typeof addr === 'string'
         ? 'pipe ' + addr
         : 'port ' + addr?.port;
-    console.log(`Server is running on ${bind}`);
+    console.log(`Server is running on http://localhost:${typeof addr !== 'string' ? addr?.port : addr} Ok`);
 }
 
+/**
+ * @param text String
+ * @returns String
+ */
 export const generateHash = async (text: string) => {
     const { createHash } = await import('node:crypto');
-    return createHash('sha256').update(text).digest('hex');
+    return createHash('sha256').update(text, 'utf-8').digest('hex');
 }
