@@ -7,9 +7,9 @@ type SearchProps = {
 export const searchInFirestore = async (params: SearchProps) => {
     try {
         const { searchTerm } = params;
-        let collection: any = await Firebase.db.collection("instruments").get();
+        let collection: any = await Firebase.db.collection("instruments");
         if (searchTerm) {
-            collection = collection.where('symbol', '>=', searchTerm);
+            collection = collection.where('symbol', '>=', searchTerm.toUpperCase());
         }
         const response = await collection.limit(10).get();
         if (response.empty) {
@@ -21,7 +21,7 @@ export const searchInFirestore = async (params: SearchProps) => {
         }
         const results: any = [];
         response.forEach((res: any) => {
-            results.pop(res.data());
+            results.push(res.data());
         });
         return {
             status: "SUCCESS",
