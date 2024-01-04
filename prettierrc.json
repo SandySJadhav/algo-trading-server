@@ -1,0 +1,19 @@
+{
+    "singleQuote": true,
+    "tabWidth": 2,
+    "trailingComma": "none",
+    "jsxSingleQuote": true,
+    "tsxSingleQuote": true,
+    "arrowParens": "avoid",
+    "importOrder": [
+        "^react(.*)$",
+        "^next(.*)$",
+        "^@redux(.*)$",
+        "^@components/(.*)$",
+        "^@services(.*)$",
+        "^@constants/(.*)$",
+        "^@actions/(.*)$",
+        "<THIRD_PARTY_MODULES>",
+        "^[./]"
+    ]
+}
