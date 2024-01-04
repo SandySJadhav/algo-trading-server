@@ -67,16 +67,19 @@ const processInstruments = async (instruments: any, collection: any, isDelete: a
     console.log(isDelete ? "Deleted all records from Firestore" : "Pushed all records to Firestore");
 };
 
-const processDataToFirebase = async (instruments: any) => {
+const processDataToFirebase = async () => {
     const collection = await Firebase.db.collection("instruments");
     // delete existing data from firestore if already expired
     const deleteInstrumentList: any[] = [];
 
     try {
+        const dtStart = new Date();
+        dtStart.setHours(0, 0, 0, 0);
+        // find contracts expired at 12AM midnight
         const docs = await collection.where(
             "expiry_timestamp",
             "<",
-            Timestamp.fromDate(new Date())
+            Timestamp.fromDate(dtStart)
         ).get();
         docs.forEach((doc: any) => {
             deleteInstrumentList.push(doc.ref);
@@ -87,6 +90,14 @@ const processDataToFirebase = async (instruments: any) => {
     if (deleteInstrumentList.length > 0) {
         // proceed to delete instruments from database;
         await processInstruments(deleteInstrumentList, collection, true);
+
+        // fetch all instruments from Angel one free json file
+        const { instruments, hasError } = await fetchAllInstruments();
+        if (hasError) {
+            // store this data in Firebase database
+            console.log("Failed to download instruments from Angel One");
+            return;
+        }
         // now create new payload to upload new data
         const selectedInstruments = instruments
             .filter((instrument: any) => supportedSegments.includes(instrument.exch_seg))
@@ -99,17 +110,21 @@ const processDataToFirebase = async (instruments: any) => {
                 instrumenttype,
                 exch_seg,
                 tick_size
-            }: any) => ({
-                token,
-                symbol,
-                name,
-                lotsize,
-                instrumenttype,
-                exch_seg,
-                expiry,
-                tick_size,
-                expiry_timestamp: Timestamp.fromDate(new Date(expiry || '12DEC9999'))
-            }));
+            }: any) => {
+                const dtEnd = new Date(expiry || '12DEC9999');
+                dtEnd.setHours(23, 59, 59, 999);
+                return {
+                    token,
+                    symbol,
+                    name,
+                    lotsize,
+                    instrumenttype,
+                    exch_seg,
+                    expiry,
+                    tick_size,
+                    expiry_timestamp: Timestamp.fromDate(dtEnd)
+                };
+            });
         if (selectedInstruments?.length > 0) {
             console.log("Pushing NSE, NFO & MCX records to Firestore ---> Count: ", selectedInstruments.length);
             await processInstruments(selectedInstruments, collection, false);
@@ -141,13 +156,6 @@ export const startCronerToSyncInstruments = () => {
     // for dev mode, run cron job im
     Cron(scheduledTimer, { maxRuns }, async () => {
         // run cron job at 11.30PM in night
-
-        const response = await fetchAllInstruments();
-        if (!response.hasError) {
-            // store this data in Firebase database
-            processDataToFirebase(response.instruments);
-        } else {
-            console.log("Cancelling data processing because of currupt data");
-        }
+        processDataToFirebase();
     });
 };
