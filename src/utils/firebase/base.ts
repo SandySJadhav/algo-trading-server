@@ -114,10 +114,10 @@ const processDataToFirebase = async (instruments: any) => {
             console.log("Pushing NSE, NFO & MCX records to Firestore ---> Count: ", selectedInstruments.length);
             await processInstruments(selectedInstruments, collection, false);
         } else {
-            console.log("No records to delete. Everything already up to date");
+            console.log("No records to delete. Everything already up to date in Firestore");
         }
     } else {
-        console.log("No records to delete. Everything already up to date");
+        console.log("No records to delete. Everything already up to date in Firestore");
     }
 };
 
