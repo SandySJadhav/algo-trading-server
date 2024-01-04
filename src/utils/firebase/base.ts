@@ -70,15 +70,20 @@ const processInstruments = async (instruments: any, collection: any, isDelete: a
 const processDataToFirebase = async (instruments: any) => {
     const collection = await Firebase.db.collection("instruments");
     // delete existing data from firestore if already expired
-    const docs = await collection.where(
-        "expiry_timestamp",
-        "<",
-        Timestamp.fromDate(new Date())
-    ).get();
     const deleteInstrumentList: any[] = [];
-    docs.forEach((doc: any) => {
-        deleteInstrumentList.push(doc.ref);
-    });
+
+    try {
+        const docs = await collection.where(
+            "expiry_timestamp",
+            "<",
+            Timestamp.fromDate(new Date())
+        ).get();
+        docs.forEach((doc: any) => {
+            deleteInstrumentList.push(doc.ref);
+        });
+    } catch (error) {
+        console.log(JSON.parse(JSON.stringify(error)));
+    }
     if (deleteInstrumentList.length > 0) {
         // proceed to delete instruments from database;
         await processInstruments(deleteInstrumentList, collection, true);
@@ -111,6 +116,8 @@ const processDataToFirebase = async (instruments: any) => {
         } else {
             console.log("No records to delete. Everything already up to date");
         }
+    } else {
+        console.log("No records to delete. Everything already up to date");
     }
 };
 

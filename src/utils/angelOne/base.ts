@@ -2,13 +2,12 @@ import address from "address";
 import { postRequest } from "../http.interceptor";
 import API from "./api";
 
-const totp = '917821'
-
 class Angel {
-    REFRESHTOKEN = ""
-    JWTTOKEN = ""
-    USERID = ""
-    PWD = ""
+    REFRESHTOKEN = "";
+    JWTTOKEN = "";
+    USERID = "";
+    PWD = "";
+    TOTP = "";
     headers = {
         "X-ClientLocalIP": "",
         "X-MACAddress": "",
@@ -19,10 +18,11 @@ class Angel {
         "X-PrivateKey": "",
         'X-ClientPublicIP': "",
         'Authorization': ''
-    }
-    constructor(userId: string, pass: string) {
+    };
+    constructor(userId: string, pass: string, totp: string) {
         this.USERID = userId;
         this.PWD = pass;
+        this.TOTP = totp;
 
         this.headers = {
             "Content-Type": "application/json",
@@ -34,7 +34,7 @@ class Angel {
             'X-ClientPublicIP': '',
             'X-MACAddress': '',
             'Authorization': ''
-        }
+        };
 
         address((err, addrs) => {
             this.headers["X-ClientLocalIP"] = addrs !== undefined ? addrs.ip + "" : '192.168.168.168';
@@ -46,7 +46,7 @@ class Angel {
         const response = await postRequest(API.root + API.user_login, {
             clientcode: this.USERID,
             password: this.PWD,
-            totp,
+            totp: this.TOTP,
         }, this.headers);
         if (response.status) {
             console.log('Angel Login success, Token generated: Ok');
@@ -61,11 +61,11 @@ class Angel {
     async regenerateSession() {
         const response = await postRequest(API.root + API.generate_token, {
             "refreshToken": this.REFRESHTOKEN
-        }, this.headers)
+        }, this.headers);
         if (response.status) {
             this.JWTTOKEN = response.data.jwtToken;
             if (response.data.refreshToken) {
-                this.REFRESHTOKEN = response.data.refreshToken
+                this.REFRESHTOKEN = response.data.refreshToken;
             }
             console.log("Angel Token regeneration success: Ok");
         } else {

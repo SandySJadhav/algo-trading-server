@@ -29,22 +29,33 @@ export const searchInFirestore = async (params: SearchProps) => {
             data: results
         };
     } catch (error) {
-        const jsonRes = JSON.parse(JSON.stringify(error));
-        if (jsonRes.code === 8) {
-            // daily quota exceeded in firestore;
-            return {
-                status: "ERROR",
-                statusCode: 503,
-                message: "Service Unavailable",
-                error: jsonRes
-            };
-        } else {
-            return {
+        let responseJSON;
+        try {
+            const jsonRes = JSON.parse(JSON.stringify(error));
+            if (jsonRes.code === 8) {
+                // daily quota exceeded in firestore;
+                responseJSON = {
+                    status: "ERROR",
+                    statusCode: 503,
+                    message: "Service Unavailable",
+                    error: jsonRes
+                };
+            } else {
+                responseJSON = {
+                    status: "ERROR",
+                    statusCode: 500,
+                    message: "Internal Server Error",
+                    error: jsonRes
+                };
+            }
+        } catch (err) {
+            responseJSON = {
                 status: "ERROR",
                 statusCode: 500,
                 message: "Internal Server Error",
-                error: jsonRes
+                error
             };
         }
+        return responseJSON;
     }
 };
