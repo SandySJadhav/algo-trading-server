@@ -9,7 +9,7 @@ export const searchInFirestore = async (params: SearchProps) => {
         const { searchTerm } = params;
         let collection: any = await Firebase.db.collection("instruments").get();
         if (searchTerm) {
-            collection = collection.where('symbol', '>=', searchTerm);
+            collection = collection.where('symbol', '>=', searchTerm.toUpperCase());
         }
         const response = await collection.limit(10).get();
         if (response.empty) {
