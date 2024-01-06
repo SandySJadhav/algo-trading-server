@@ -165,7 +165,7 @@ const formatPayload = ({
   };
 };
 
-const filterInstruments = (instruments: Prop[] = []) => {
+const filterInstruments = (instruments: Prop[]) => {
   return instruments
     .filter(({ exch_seg, expiry, symbol, instrumenttype }: Prop) => {
       if (supportedInstruments[exch_seg]?.[instrumenttype] && expiry) {
@@ -333,7 +333,7 @@ const processDataToFirebase = async () => {
     }
 
     // now create new payload to upload new data
-    const selectedInstruments = filterInstruments();
+    const selectedInstruments = filterInstruments(instruments);
     if (selectedInstruments?.length > 0) {
       console.log(
         "Pushing NSE, NFO & MCX records to Firestore ---> Count: ",
