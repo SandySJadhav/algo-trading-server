@@ -73,7 +73,8 @@ const formatPayload = ({
   tick_size,
 }: Prop) => {
   // rel_keywords are related to symbol
-  const rel_keywords: any = [];
+  const rel_keywords: string[] = [name];
+
   const expiryDate = new Date(expiry || "12DEC9999");
   expiryDate.setHours(23, 59, 59, 999);
 
@@ -206,7 +207,6 @@ const filterInstruments = (instruments: Prop[]) => {
 const fetchAllInstruments = async () => {
   let data: string = "";
   let response: any = {};
-  console.log("Downloading all instrument data From Angel One...");
   await new Promise((resolve: any) => {
     fetch(
       "https://margincalculator.angelbroking.com/OpenAPI_File/files/OpenAPIScripMaster.json"
@@ -222,7 +222,6 @@ const fetchAllInstruments = async () => {
           })
           .on("end", () => {
             if (!response.hasError) {
-              console.log("Downloaded all instrument data From Angel One");
               response.instruments = JSON.parse(data);
               resolve("SUCCESS");
             }
@@ -310,27 +309,19 @@ const processDataToFirebase = async () => {
     const { instruments, hasError } = await fetchAllInstruments();
     if (hasError) {
       // store this data in Firebase database
-      console.log("Failed to download instruments from Angel One");
       return;
     }
 
     // now create new payload to upload new data
     const selectedInstruments = filterInstruments(instruments);
     if (selectedInstruments?.length > 0) {
-      console.log(
-        "Pushing NSE, NFO & MCX records to Firestore ---> Count: ",
-        selectedInstruments.length
-      );
+      console.log("Record Count: ", selectedInstruments.length);
       await processInstruments(selectedInstruments, collection, false);
     } else {
-      console.log(
-        "No records to delete. Everything already up to date in Firestore"
-      );
+      console.log("Everything up to date.");
     }
   } else {
-    console.log(
-      "No records to delete. Everything already up to date in Firestore"
-    );
+    console.log("Everything up to date.");
   }
 };
 
