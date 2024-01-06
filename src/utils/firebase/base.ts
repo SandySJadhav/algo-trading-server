@@ -72,11 +72,8 @@ const formatPayload = ({
   exch_seg,
   tick_size,
 }: Prop) => {
-  // name_keywords are related to name
-  const name_keywords: any = [];
   // rel_keywords are related to symbol
   const rel_keywords: any = [];
-
   const expiryDate = new Date(expiry || "12DEC9999");
   expiryDate.setHours(23, 59, 59, 999);
 
@@ -136,20 +133,6 @@ const formatPayload = ({
     }
   }
 
-  const midVal: number = parseInt("" + name.length / 2);
-  const minWordLen: number = midVal > 1 ? midVal : 2;
-
-  for (let i = name.length; i >= minWordLen; i--) {
-    const word = name.substring(0, i);
-    const text = sanitizeText(word);
-    if (!keywordExists(name_keywords, text)) {
-      name_keywords.push(text);
-    }
-    if (!keywordExists(name_keywords, word)) {
-      name_keywords.push(word);
-    }
-  }
-
   return {
     expiry_timestamp: Timestamp.fromDate(expiryDate),
     token,
@@ -160,7 +143,6 @@ const formatPayload = ({
     exch_seg,
     expiry,
     tick_size,
-    name_keywords,
     rel_keywords,
   };
 };

@@ -7,13 +7,31 @@ type SearchProps = {
 export const searchInFirestore = async (params: SearchProps) => {
   try {
     const { searchTerm } = params;
-    const keywords = searchTerm.toUpperCase()
-    const response = await Firebase.db
-      .collection("instruments")
-      .where("keywords", "array-contains-any", keywords.split(" "))
-      .orderBy("priority", "asc")
-      .limit(1)
-      .get();
+    const keywords = searchTerm.toUpperCase();
+    const qry = Firebase.db.collection("instruments");
+    let response;
+    const allKeywords = keywords.split(" ");
+
+    if (allKeywords.length > 1) {
+      response = await qry
+        .where(
+          "rel_keywords",
+          "array-contains-any",
+          keywords.substring(allKeywords[0].length + 1).split(" ")
+        )
+        .orderBy("name")
+        .startAt(allKeywords[0])
+        .endAt(allKeywords[0] + "\uf8ff")
+        .limit(10)
+        .get();
+    } else {
+      response = await qry
+        .orderBy("name")
+        .startAt(allKeywords[0])
+        .endAt(allKeywords[0] + "\uf8ff")
+        .limit(10)
+        .get();
+    }
 
     if (response.empty) {
       return {
