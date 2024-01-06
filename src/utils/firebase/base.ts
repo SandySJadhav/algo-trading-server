@@ -12,19 +12,19 @@ import { sanitizeText } from "../helpers";
 */
 
 const supportedInstruments: any = {
-  MCX: [
-    "OPTFUT", // commodity futures
-    "FUTCOM", // commodity futures
+  MCX: {
+    OPTFUT: true, // commodity futures
+    FUTCOM: true, // commodity futures
     // "COMDTY", // not supported
     // "FUTIDX", // not supported
     // "AMXIDX", // not supported
-  ],
-  NFO: [
-    "OPTSTK", // stock options
-    "OPTIDX", // index options
-    "FUTSTK", // stock futures
-    "FUTIDX", // index futures
-  ],
+  },
+  NFO: {
+    OPTSTK: true, // stock options
+    OPTIDX: true, // index options
+    FUTSTK: true, // stock futures
+    FUTIDX: true, // index futures
+  },
 };
 
 const months = [
