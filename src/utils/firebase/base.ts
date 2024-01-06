@@ -4,7 +4,29 @@ import fetch from "node-fetch";
 import { Timestamp } from "firebase-admin/firestore";
 import { sanitizeText } from "../helpers";
 
-const supportedSegments = ["NSE", "NFO", "MCX"];
+/*
+  const NSE = [
+    "", // stocks - only consider stocks ending with -EQ postfix
+    // "AMXIDX", // not supported
+  ];
+*/
+
+const supportedInstruments: any = {
+  MCX: [
+    "OPTFUT", // commodity futures
+    "FUTCOM", // commodity futures
+    // "COMDTY", // not supported
+    // "FUTIDX", // not supported
+    // "AMXIDX", // not supported
+  ],
+  NFO: [
+    "OPTSTK", // stock options
+    "OPTIDX", // index options
+    "FUTSTK", // stock futures
+    "FUTIDX", // index futures
+  ],
+};
+
 const months = [
   "JAN",
   "FEB",
@@ -20,8 +42,14 @@ const months = [
   "DEC",
 ];
 
+/**
+ *
+ * @param list - String[]
+ * @param text - String
+ * @returns
+ */
 const keywordExists = (list: any = [], text: string) =>
-  list.indexOf(text) !== -1;
+  !text || list.indexOf(text) !== -1 || list.length >= 30;
 
 type Prop = {
   token: any;
@@ -29,12 +57,12 @@ type Prop = {
   name: string;
   expiry: string;
   lotsize: any;
-  instrumenttype?: string;
+  instrumenttype: string;
   exch_seg: string;
   tick_size: any;
 };
 
-const getPayload = ({
+const formatPayload = ({
   token,
   symbol,
   name,
@@ -44,97 +72,86 @@ const getPayload = ({
   exch_seg,
   tick_size,
 }: Prop) => {
-  let priority: number = 1;
-  const dtEnd = new Date(expiry || "12DEC9999");
-  dtEnd.setHours(23, 59, 59, 999);
-  const keywords: any = [];
+  // name_keywords are related to name
+  const name_keywords: any = [];
+  // rel_keywords are related to symbol
+  const rel_keywords: any = [];
 
-  // For NSE, NFO & MCX
-  // push all combinations of symbol
-  for (let i = 1; i < symbol.length; i++) {
-    const text = sanitizeText(symbol.substring(0, i + 1));
-    if (!keywordExists(keywords, text)) {
-      keywords.push(text);
+  const expiryDate = new Date(expiry || "12DEC9999");
+  expiryDate.setHours(23, 59, 59, 999);
+
+  if (exch_seg !== "NSE") {
+    // stocks don't have expiry
+    const month = months[expiryDate.getMonth()]; // month = JAN
+    const expDate = expiry.split(month)[0]; // expDate = 31
+    if (!keywordExists(rel_keywords, month)) {
+      rel_keywords.push(month); // JAN
+    }
+    if (!keywordExists(rel_keywords, expDate)) {
+      rel_keywords.push(expDate); // 31
+    }
+    if (["FUTCOM", "FUTSTK", "FUTIDX"].includes(instrumenttype)) {
+      if (!keywordExists(rel_keywords, "FUT")) {
+        rel_keywords.push("FUT");
+      }
+    } else if (["OPTFUT", "OPTSTK", "OPTIDX"].includes(instrumenttype)) {
+      let wrdStr = symbol.substring(name.length);
+      const optionType = wrdStr.endsWith("CE")
+        ? "CE"
+        : wrdStr.endsWith("PE")
+        ? "PE"
+        : "";
+      if (optionType) {
+        if (!keywordExists(rel_keywords, optionType)) {
+          rel_keywords.push(optionType); // CE or PE
+        }
+        // remove CT or PE at end
+        wrdStr = wrdStr.substring(0, wrdStr.length - 2); // output -> MCX = 24FEB7000 and for NFO = 24FEB247000
+        if (instrumenttype === "OPTFUT") {
+          // MCX option
+          wrdStr = wrdStr.substring(5); // output = 7000
+        } else {
+          // NFO option
+          wrdStr = wrdStr.substring(7); // output = 7000
+        }
+        if (!keywordExists(rel_keywords, wrdStr)) {
+          rel_keywords.push(wrdStr); // 7000
+        }
+
+        const midVal: number = parseInt("" + wrdStr.length / 2);
+        const minWordLen: number = midVal > 2 ? midVal : 3;
+
+        for (let i = wrdStr.length; i >= minWordLen; i--) {
+          const word = wrdStr.substring(0, i);
+          if (!keywordExists(rel_keywords, word)) {
+            rel_keywords.push(word);
+          }
+        }
+      } else {
+        console.log(
+          'Something is missing with ["OPTFUT", "OPTSTK", "OPTIDX"], found option with do not ends with CE or PE',
+          symbol
+        );
+      }
     }
   }
-  /**
-   * we have 3 types of instruments in MCX
-   * 1. FUTCOM
-   * 2. OPTFUT
-   * 3. COMDTY - ignored for now, skipped
-   */
-  if (exch_seg === "MCX" && instrumenttype === "FUTCOM") {
-    priority = 2;
-    const month = months[dtEnd.getMonth()]; // output = JAN
-    if (!keywordExists(keywords, month)) {
-      keywords.push(month);
+
+  const midVal: number = parseInt("" + name.length / 2);
+  const minWordLen: number = midVal > 1 ? midVal : 2;
+
+  for (let i = name.length; i >= minWordLen; i--) {
+    const word = name.substring(0, i);
+    const text = sanitizeText(word);
+    if (!keywordExists(name_keywords, text)) {
+      name_keywords.push(text);
     }
-    const actualExp = expiry.split(month); // output = [31, 2024]
-    if (!keywordExists(keywords, actualExp[0])) {
-      keywords.push(actualExp[0]); // 31
-    }
-    if (!keywordExists(keywords, actualExp[1])) {
-      keywords.push(actualExp[1]); // 2024
-    }
-    const shortYear = actualExp[1].split("20")[1];
-    if (!keywordExists(keywords, shortYear)) {
-      keywords.push(shortYear); // 24
-    }
-    // all symbols ends with FUT string
-    if (!keywordExists(keywords, "FUT")) {
-      keywords.push("FUT");
-    }
-  } else if (
-    (exch_seg === "MCX" && instrumenttype === "OPTFUT") ||
-    exch_seg === "NFO"
-  ) {
-    priority = 3;
-    // SILVERM24APR86250PE
-    // BANKNIFTY17JAN2452500PE
-    const month = months[dtEnd.getMonth()]; // output = JAN
-    if (!keywordExists(keywords, month)) {
-      keywords.push(month);
-    }
-    const actualExp = expiry.split(month); // output = [31, 2024]
-    if (!keywordExists(keywords, actualExp[0])) {
-      keywords.push(actualExp[0]); // 31
-    }
-    if (!keywordExists(keywords, actualExp[1])) {
-      keywords.push(actualExp[1]); // 2024
-    }
-    const shortYear = actualExp[1].split("20")[1];
-    if (!keywordExists(keywords, shortYear)) {
-      keywords.push(shortYear); // 24
-    }
-    // extract remaining string
-    let wrdStr = symbol.substring(name.length);
-    if (wrdStr.endsWith("PE") || wrdStr.endsWith("CE")) {
-      // put or call option
-      const val = wrdStr.endsWith("CE") ? "CE" : "PE";
-      wrdStr = wrdStr.substring(0, wrdStr.length - 2);
-      if (exch_seg === "MCX") {
-        // here we can trim 5 characters from start - 24APR 86250
-        wrdStr = wrdStr.substring(5); // output - 86250
-      } else {
-        // NFO
-        wrdStr = wrdStr.substring(7);
-      }
-      for (let i = 1; i < wrdStr.length; i++) {
-        const text = sanitizeText(wrdStr.substring(0, i + 1));
-        if (!keywordExists(keywords, text)) {
-          keywords.push(text);
-        }
-      }
-      if (!keywordExists(keywords, wrdStr)) {
-        keywords.push(wrdStr);
-      }
-      if (!keywordExists(keywords, val)) {
-        keywords.push(val);
-      }
+    if (!keywordExists(name_keywords, word)) {
+      name_keywords.push(word);
     }
   }
 
   return {
+    expiry_timestamp: Timestamp.fromDate(expiryDate),
     token,
     symbol,
     name,
@@ -143,10 +160,65 @@ const getPayload = ({
     exch_seg,
     expiry,
     tick_size,
-    expiry_timestamp: Timestamp.fromDate(dtEnd),
-    keywords,
-    priority,
+    name_keywords,
+    rel_keywords,
   };
+};
+
+const filterInstruments = (instruments: Prop[] = []) => {
+  return instruments
+    .filter(({ exch_seg, expiry, symbol, instrumenttype }: Prop) => {
+      if (supportedInstruments[exch_seg]?.[instrumenttype] && expiry) {
+        // either NFO or MCX, load only next 1 month of data
+        const expiryDate = new Date(expiry);
+        // set time as day end
+        expiryDate.setHours(23, 59, 59, 999);
+        // get todays date for comparison
+        const todayDate = new Date();
+        // set time as day start
+        todayDate.setHours(0, 0, 0, 0);
+        // get difference in missiseconds
+        const diffTime = expiryDate.valueOf() - todayDate.valueOf();
+        // conver to days
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        // check if difference is not more than 62 days and not less than today's date
+        if (diffDays > 0 && diffDays < 32) {
+          // date difference is not more than 61 days
+          return true;
+        }
+        // expiry date is faar away more than what we need
+        return false;
+      }
+      return (
+        exch_seg === "NSE" &&
+        !instrumenttype &&
+        symbol.endsWith("-EQ") &&
+        !expiry
+      );
+    })
+    .map(
+      ({
+        token,
+        symbol,
+        name,
+        expiry,
+        lotsize,
+        instrumenttype,
+        exch_seg,
+        tick_size,
+      }: Prop) => {
+        return formatPayload({
+          token,
+          symbol,
+          name,
+          expiry,
+          lotsize,
+          instrumenttype,
+          exch_seg,
+          tick_size,
+        });
+      }
+    );
 };
 
 const fetchAllInstruments = async () => {
@@ -261,65 +333,7 @@ const processDataToFirebase = async () => {
     }
 
     // now create new payload to upload new data
-    const selectedInstruments = instruments
-      .filter(({ exch_seg, expiry, symbol, instrumenttype }: any) => {
-        if (
-          !supportedSegments.includes(exch_seg) ||
-          instrumenttype === "COMDTY"
-        ) {
-          // segment and actual comdty not needed
-          return false;
-        } else if (!expiry) {
-          if (symbol.endsWith("-EQ")) {
-            // store only equity
-            return true;
-          }
-          return false;
-        } else if (expiry) {
-          // expiry value is there. now we need to load only next 2 months of data
-          const expiryDate = new Date(expiry);
-          // set time as day end
-          expiryDate.setHours(23, 59, 59, 999);
-
-          const todayDate = new Date();
-          // set time as day start
-          todayDate.setHours(0, 0, 0, 0);
-          // get difference in missiseconds
-          const diffTime = expiryDate.valueOf() - todayDate.valueOf();
-          // conver to days
-          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-          // check if difference is not more than 62 days and not less than today's date
-          if (diffDays > 0 && diffDays < 32) {
-            // date difference is not more than 61 days
-            return true;
-          } else {
-            // ignore this record as it's expiry date is more than 61 days away
-            return false;
-          }
-        }
-      })
-      .map(
-        ({
-          token,
-          symbol,
-          name,
-          expiry,
-          lotsize,
-          instrumenttype,
-          exch_seg,
-          tick_size,
-        }: Prop) =>
-          getPayload({
-            token,
-            symbol,
-            name,
-            expiry,
-            lotsize,
-            instrumenttype,
-            exch_seg,
-            tick_size,
-          })
-      );
+    const selectedInstruments = filterInstruments();
     if (selectedInstruments?.length > 0) {
       console.log(
         "Pushing NSE, NFO & MCX records to Firestore ---> Count: ",

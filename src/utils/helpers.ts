@@ -66,6 +66,5 @@ export const generateHash = async (text: string) => {
 export const sanitizeText = (text: string) =>
   text
     .replace(/[^a-zA-Z0-9\s:]/g, "")
-    .split(" ")
-    .join("")
+    .trim()
     .toUpperCase();
