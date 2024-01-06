@@ -1,3 +1,4 @@
+import { Filter } from "firebase-admin/firestore";
 import Firebase from "./instance";
 
 type SearchProps = {
@@ -66,7 +67,7 @@ const getFilteredResults = (results: Prop[], query: string[]) => {
 export const searchInFirestore = async (params: SearchProps) => {
   try {
     const { searchTerm } = params;
-    const keywords = searchTerm.toUpperCase();
+    const keywords = searchTerm.toUpperCase().trim();
     const allKeywords = keywords.split(" ");
     let allKeywordsWithoutName;
     let response;
@@ -82,12 +83,17 @@ export const searchInFirestore = async (params: SearchProps) => {
         .orderBy("name")
         .startAt(allKeywords[0])
         .endAt(allKeywords[0] + "\uf8ff")
-        .limit(100)
+        .limit(10)
         .get();
     } else {
       response = await instruments
-        .where("name", ">=", keywords)
-        .limit(10)
+        .where(
+          Filter.or(
+            Filter.where("symbol", "==", keywords),
+            Filter.where("symbol", "==", keywords + "-" + "EQ")
+          )
+        )
+        .limit(2)
         .get();
     }
 
@@ -103,6 +109,7 @@ export const searchInFirestore = async (params: SearchProps) => {
     response.forEach((res: any) => {
       const resData: Prop = res.data();
       const { symbol, exch_seg, name, instrumenttype, expiry } = resData;
+      console.log(name + " : " + symbol);
       if (exch_seg !== "NSE") {
         const expiryDate = new Date(expiry);
         expiryDate.setHours(23, 59, 59, 999);

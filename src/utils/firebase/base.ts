@@ -339,10 +339,10 @@ const processDataToFirebase = async () => {
 export const startCronerToSyncInstruments = () => {
   let maxRuns: any = undefined;
   let scheduledTimer: string = "0 0 5 * * 1-5";
-  if (process.env.environment === "dev") {
-    maxRuns = 1;
-    scheduledTimer = "* * * * * *";
-  }
+  // if (process.env.environment === "dev") {
+  //   maxRuns = 1;
+  //   scheduledTimer = "* * * * * *";
+  // }
   // for dev mode, run cron job im
   Cron(scheduledTimer, { maxRuns }, async () => {
     // run cron job at 11.30PM in night
