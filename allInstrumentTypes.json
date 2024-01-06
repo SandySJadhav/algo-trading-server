@@ -1,0 +1,57 @@
+{
+    "uniqueNSEInstruments": {
+        "NSE_EMPTY": {
+            "exch_seg": "NSE",
+            "instrumenttype": "",
+            "expiry": "",
+            "symbol": "RELIANCE-EQ",
+            "name": "RELIANCE"
+        }
+    },
+    "uniqueMCXInstruments": {
+        "OPTFUT": {
+            "exch_seg": "MCX",
+            "instrumenttype": "OPTFUT",
+            "expiry": "19MAR2024",
+            "symbol": "COPPER24MAR790CE",
+            "name": "COPPER"
+        },
+        "FUTCOM": {
+            "exch_seg": "MCX",
+            "instrumenttype": "FUTCOM",
+            "expiry": "30APR2024",
+            "symbol": "GOLDPETAL24APRFUT",
+            "name": "GOLDPETAL"
+        }
+    },
+    "uniqueNFOInstruments": {
+        "OPTSTK": {
+            "exch_seg": "NFO",
+            "instrumenttype": "OPTSTK",
+            "expiry": "28MAR2024",
+            "symbol": "ASTRAL28MAR241820CE",
+            "name": "ASTRAL"
+        },
+        "OPTIDX": {
+            "exch_seg": "NFO",
+            "instrumenttype": "OPTIDX",
+            "expiry": "11JAN2024",
+            "symbol": "NIFTY11JAN2420200CE",
+            "name": "NIFTY"
+        },
+        "FUTSTK": {
+            "exch_seg": "NFO",
+            "instrumenttype": "FUTSTK",
+            "expiry": "28MAR2024",
+            "symbol": "LAURUSLABS28MAR24FUT",
+            "name": "LAURUSLABS"
+        },
+        "FUTIDX": {
+            "exch_seg": "NFO",
+            "instrumenttype": "FUTIDX",
+            "expiry": "29FEB2024",
+            "symbol": "BANKNIFTY29FEB24FUT",
+            "name": "BANKNIFTY"
+        }
+    }
+}
