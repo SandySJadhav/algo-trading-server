@@ -72,8 +72,10 @@ const formatPayload = ({
   exch_seg,
   tick_size,
 }: Prop) => {
+  // name_keywords are related to name
+  const name_keywords: any = [];
   // rel_keywords are related to symbol
-  const rel_keywords: string[] = [name];
+  const rel_keywords: any = [];
 
   const expiryDate = new Date(expiry || "12DEC9999");
   expiryDate.setHours(23, 59, 59, 999);
@@ -134,6 +136,25 @@ const formatPayload = ({
     }
   }
 
+  if (
+    ["FUTCOM", "FUTSTK", "FUTIDX"].includes(instrumenttype) ||
+    exch_seg === "NSE"
+  ) {
+    const midVal: number = parseInt("" + name.length / 2);
+    const minWordLen: number = midVal > 1 ? midVal : 2;
+
+    for (let i = name.length; i >= minWordLen; i--) {
+      const word = name.substring(0, i);
+      const text = sanitizeText(word);
+      if (!keywordExists(name_keywords, text)) {
+        name_keywords.push(text);
+      }
+      if (!keywordExists(name_keywords, word)) {
+        name_keywords.push(word);
+      }
+    }
+  }
+
   return {
     expiry_timestamp: Timestamp.fromDate(expiryDate),
     token,
@@ -144,6 +165,7 @@ const formatPayload = ({
     exch_seg,
     expiry,
     tick_size,
+    name_keywords,
     rel_keywords,
   };
 };
@@ -207,6 +229,7 @@ const filterInstruments = (instruments: Prop[]) => {
 const fetchAllInstruments = async () => {
   let data: string = "";
   let response: any = {};
+  console.log("Downloading all instrument data From Angel One...");
   await new Promise((resolve: any) => {
     fetch(
       "https://margincalculator.angelbroking.com/OpenAPI_File/files/OpenAPIScripMaster.json"
@@ -222,6 +245,7 @@ const fetchAllInstruments = async () => {
           })
           .on("end", () => {
             if (!response.hasError) {
+              console.log("Downloaded all instrument data From Angel One");
               response.instruments = JSON.parse(data);
               resolve("SUCCESS");
             }
@@ -339,10 +363,10 @@ const processDataToFirebase = async () => {
 export const startCronerToSyncInstruments = () => {
   let maxRuns: any = undefined;
   let scheduledTimer: string = "0 0 5 * * 1-5";
-  // if (process.env.environment === "dev") {
-  //   maxRuns = 1;
-  //   scheduledTimer = "* * * * * *";
-  // }
+  if (process.env.environment === "dev") {
+    maxRuns = 1;
+    scheduledTimer = "* * * * * *";
+  }
   // for dev mode, run cron job im
   Cron(scheduledTimer, { maxRuns }, async () => {
     // run cron job at 11.30PM in night

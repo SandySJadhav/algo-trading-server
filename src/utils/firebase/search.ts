@@ -69,15 +69,13 @@ export const searchInFirestore = async (params: SearchProps) => {
     const { searchTerm } = params;
     const keywords = searchTerm.toUpperCase().trim();
     const allKeywords = keywords.split(" ");
-    let allKeywordsWithoutName;
-    let response;
     const instruments = Firebase.db.collection("instruments");
+    let response;
 
     if (allKeywords.length > 1) {
-      allKeywordsWithoutName = keywords
+      const allKeywordsWithoutName = keywords
         .substring(allKeywords[0].length + 1)
         .split(" ");
-
       response = await instruments
         .where("rel_keywords", "array-contains-any", allKeywordsWithoutName)
         .orderBy("name")
@@ -87,13 +85,11 @@ export const searchInFirestore = async (params: SearchProps) => {
         .get();
     } else {
       response = await instruments
-        .where(
-          Filter.or(
-            Filter.where("symbol", "==", keywords),
-            Filter.where("symbol", "==", keywords + "-" + "EQ")
-          )
-        )
-        .limit(2)
+        .where("name_keywords", "array-contains-any", allKeywords)
+        .orderBy("name")
+        .startAt(allKeywords[0])
+        .endAt(allKeywords[0] + "\uf8ff")
+        .limit(10)
         .get();
     }
 
