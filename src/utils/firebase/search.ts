@@ -1,5 +1,6 @@
 import { Filter } from "firebase-admin/firestore";
 import Firebase from "./instance";
+import { instrument_prop } from "../types";
 
 type SearchProps = {
   searchTerm: string;
@@ -20,23 +21,9 @@ const months: string[] = [
   "DEC",
 ];
 
-type Prop = {
-  token: any;
-  symbol: string;
-  name: string;
-  expiry: string;
-  lotsize: any;
-  instrumenttype: string;
-  exch_seg: string;
-  tick_size: any;
-  rel_keywords: any;
-  matches: any;
-  displayName?: string;
-};
-
-const getFilteredResults = (results: Prop[], query: string[]) => {
+const getFilteredResults = (results: instrument_prop[], query: string[]) => {
   let maxMatched = 0;
-  results.forEach((result: Prop) => {
+  results.forEach((result: instrument_prop) => {
     // count matching records
     let matches = 0;
     query.forEach((item: string) => {
@@ -52,7 +39,7 @@ const getFilteredResults = (results: Prop[], query: string[]) => {
     result.matches = matches;
   });
 
-  results.sort(function (a: Prop, b: Prop) {
+  results.sort(function (a: instrument_prop, b: instrument_prop) {
     if (a.matches > b.matches) {
       return -1;
     } else if (a.matches < b.matches || a.symbol.endsWith("FUT")) {
@@ -61,7 +48,7 @@ const getFilteredResults = (results: Prop[], query: string[]) => {
     return 0;
   });
 
-  return results.filter((res: Prop) => res.matches > maxMatched - 1);
+  return results.filter((res: instrument_prop) => res.matches > maxMatched - 1);
 };
 
 export const searchInFirestore = async (params: SearchProps) => {
@@ -69,14 +56,14 @@ export const searchInFirestore = async (params: SearchProps) => {
     const { searchTerm } = params;
     const keywords = searchTerm.toUpperCase().trim();
     const allKeywords = keywords.split(" ");
-    const instruments = Firebase.db.collection("instruments");
+    const instruments_collection = Firebase.db.collection("instruments");
     let response;
 
     if (allKeywords.length > 1) {
       const allKeywordsWithoutName = keywords
         .substring(allKeywords[0].length + 1)
         .split(" ");
-      response = await instruments
+      response = await instruments_collection
         .where("rel_keywords", "array-contains-any", allKeywordsWithoutName)
         .orderBy("name")
         .startAt(allKeywords[0])
@@ -84,12 +71,12 @@ export const searchInFirestore = async (params: SearchProps) => {
         .limit(10)
         .get();
     } else {
-      response = await instruments
+      response = await instruments_collection
         .where("name_keywords", "array-contains-any", allKeywords)
         .orderBy("name")
         .startAt(allKeywords[0])
         .endAt(allKeywords[0] + "\uf8ff")
-        .limit(10)
+        .limit(5)
         .get();
     }
 
@@ -101,9 +88,9 @@ export const searchInFirestore = async (params: SearchProps) => {
       };
     }
 
-    const results: Prop[] = [];
+    const results: instrument_prop[] = [];
     response.forEach((res: any) => {
-      const resData: Prop = res.data();
+      const resData: instrument_prop = res.data();
       const { symbol, exch_seg, name, instrumenttype, expiry } = resData;
       console.log(name + " : " + symbol);
       if (exch_seg !== "NSE") {
@@ -143,7 +130,7 @@ export const searchInFirestore = async (params: SearchProps) => {
       }
     });
 
-    const data: Prop[] = getFilteredResults(results, allKeywords);
+    const data: instrument_prop[] = getFilteredResults(results, allKeywords);
 
     return {
       status: "SUCCESS",

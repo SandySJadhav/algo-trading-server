@@ -3,6 +3,7 @@ import Firebase from "./instance";
 import fetch from "node-fetch";
 import { Timestamp } from "firebase-admin/firestore";
 import { sanitizeText } from "../helpers";
+import { instrument_prop } from "../types";
 
 /*
   const NSE = [
@@ -51,17 +52,6 @@ const months = [
 const keywordExists = (list: any = [], text: string) =>
   !text || list.indexOf(text) !== -1 || list.length >= 30;
 
-type Prop = {
-  token: any;
-  symbol: string;
-  name: string;
-  expiry: string;
-  lotsize: any;
-  instrumenttype: string;
-  exch_seg: string;
-  tick_size: any;
-};
-
 const formatPayload = ({
   token,
   symbol,
@@ -71,7 +61,7 @@ const formatPayload = ({
   instrumenttype,
   exch_seg,
   tick_size,
-}: Prop) => {
+}: instrument_prop) => {
   // name_keywords are related to name
   const name_keywords: any = [];
   // rel_keywords are related to symbol
@@ -170,9 +160,9 @@ const formatPayload = ({
   };
 };
 
-const filterInstruments = (instruments: Prop[]) => {
+const filterInstruments = (instruments: instrument_prop[]) => {
   return instruments
-    .filter(({ exch_seg, expiry, symbol, instrumenttype }: Prop) => {
+    .filter(({ exch_seg, expiry, symbol, instrumenttype }: instrument_prop) => {
       if (supportedInstruments[exch_seg]?.[instrumenttype] && expiry) {
         // either NFO or MCX, load only next 1 month of data
         const expiryDate = new Date(expiry);
@@ -211,7 +201,7 @@ const filterInstruments = (instruments: Prop[]) => {
         instrumenttype,
         exch_seg,
         tick_size,
-      }: Prop) => {
+      }: instrument_prop) => {
         return formatPayload({
           token,
           symbol,
@@ -363,10 +353,10 @@ const processDataToFirebase = async () => {
 export const startCronerToSyncInstruments = () => {
   let maxRuns: any = undefined;
   let scheduledTimer: string = "0 0 5 * * 1-5";
-  if (process.env.environment === "dev") {
-    maxRuns = 1;
-    scheduledTimer = "* * * * * *";
-  }
+  // if (process.env.environment === "dev") {
+  //   maxRuns = 1;
+  //   scheduledTimer = "* * * * * *";
+  // }
   // for dev mode, run cron job im
   Cron(scheduledTimer, { maxRuns }, async () => {
     // run cron job at 11.30PM in night
