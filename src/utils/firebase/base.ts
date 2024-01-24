@@ -4,6 +4,7 @@ import fetch from "node-fetch";
 import { Timestamp } from "firebase-admin/firestore";
 import { sanitizeText } from "../helpers";
 import { instrument_prop } from "../types";
+import { cleanAllStrategies } from "./strategies";
 
 /*
   const NSE = [
@@ -290,12 +291,12 @@ const processInstruments = async (
   await Promise.all(allRecords);
   console.log(
     isDelete
-      ? "Deleted all records from Firestore"
-      : `Pushed all records to Firestore in ${allRecords.length} batches`
+      ? `Deleted ${instruments.length} records from Firestore 🏄`
+      : `Pushed all records to Firestore in ${allRecords.length} batches 🏄`
   );
 };
 
-const processDataToFirebase = async () => {
+const initiateDataSync = async () => {
   const collection = await Firebase.db.collection("instruments");
   // delete existing data from firestore if already expired
   const deleteInstrumentList: any[] = [];
@@ -317,6 +318,7 @@ const processDataToFirebase = async () => {
   }
   if (deleteInstrumentList.length > 0) {
     // proceed to delete instruments from database;
+    console.log(`🚀 Found expired ${deleteInstrumentList.length} instruments`);
     await processInstruments(deleteInstrumentList, collection, true);
 
     // fetch all instruments from Angel one free json file
@@ -329,37 +331,49 @@ const processDataToFirebase = async () => {
     // now create new payload to upload new data
     const selectedInstruments = filterInstruments(instruments);
     if (selectedInstruments?.length > 0) {
-      console.log("Record Count: ", selectedInstruments.length);
+      console.log("🚀 Record Count: ", selectedInstruments.length);
       await processInstruments(selectedInstruments, collection, false);
     } else {
-      console.log("Everything up to date.");
+      console.log("🚀 Everything up to date 🏄 ", new Date().toString());
     }
   } else {
-    console.log("Everything up to date.");
+    console.log("🚀 Everything up to date 🏄 ", new Date().toString());
   }
 };
 
 /**
- * ┌──────────────── (optional) second (0 - 59)
- * │ ┌────────────── minute (0 - 59)
- * │ │ ┌──────────── hour (0 - 23)
- * │ │ │ ┌────────── day of month (1 - 31)
- * │ │ │ │ ┌──────── month (1 - 12, JAN-DEC)
- * │ │ │ │ │ ┌────── day of week (0 - 6, SUN-Mon), (0 to 6 are Sunday to Saturday; 7 is Sunday, the same as 0)
- * │ │ │ │ │ │
- * * * * * * *
+ * Croner to sync all instruments from Angel to Firestore
  */
-
 export const startCronerToSyncInstruments = () => {
-  let maxRuns: any = undefined;
-  let scheduledTimer: string = "0 0 5 * * 1-5";
-  // if (process.env.environment === "dev") {
-  //   maxRuns = 1;
-  //   scheduledTimer = "* * * * * *";
-  // }
+  /**
+   * ┌──────────────── (optional) second (0 - 59)
+   * │ ┌────────────── minute (0 - 59)
+   * │ │ ┌──────────── hour (0 - 23)
+   * │ │ │ ┌────────── day of month (1 - 31)
+   * │ │ │ │ ┌──────── month (1 - 12, JAN-DEC)
+   * │ │ │ │ │ ┌────── day of week (0 to 6 are Sunday to Saturday; 7 is Sunday, the same as 0)
+   * │ │ │ │ │ │
+   * * * * * * *
+   */
+  let maxRuns;
+  let scheduledTimer: string = "0 0 5 * * 1-5"; // At 05:00 on every day-of-week from Monday through Friday.
   // for dev mode, run cron job im
-  Cron(scheduledTimer, { maxRuns }, async () => {
-    // run cron job at 11.30PM in night
-    processDataToFirebase();
+  if (process.env.environment === "dev") {
+    maxRuns = 1;
+    scheduledTimer = "* * * * * *";
+  }
+  const instrumentSyncCroner = Cron(scheduledTimer, { maxRuns }, async () => {
+    console.log(
+      "🚀 Starting data sync with Angel and 🔥 store ",
+      new Date().toString()
+    );
+    cleanAllStrategies();
+    initiateDataSync();
   });
+  if (process.env.environment !== "dev") {
+    const newDate = new Date();
+    if (newDate.getHours() > 9 && newDate.getHours() < 23) {
+      instrumentSyncCroner.trigger();
+    }
+  }
 };

@@ -5,7 +5,7 @@ import cors from "cors";
 const app = express();
 const corsOpts = {
   origin: "http://localhost:3000",
-  methods: ["GET", "POST", "DELETE", "PUT"],
+  methods: ["GET", "POST", "DELETE"],
 };
 app.use(cors(corsOpts));
 app.use(express.json());
@@ -16,7 +16,7 @@ app.use("/search", searchRouter);
 app.use(function (req, res) {
   return res.status(404).send({
     statusCode: 404,
-    message: "Page not found!",
+    message: "Page not found 🔥!",
   });
 });
 

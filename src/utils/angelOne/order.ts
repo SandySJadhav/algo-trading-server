@@ -1,10 +1,15 @@
+import { updateOrderStatus } from "../firebase/strategies";
+import { postRequest } from "../http.interceptor";
+import { strategy_prop } from "../types";
+import API from "./api";
+
 type Order = {
-  duration: "DAY" | "IOC";
+  variety: "NORMAL"; // | "STOPLOSS" | "AMO" | "ROBO";
   transactiontype: "BUY" | "SELL";
-  variety: "NORMAL" | "STOPLOSS" | "AMO" | "ROBO";
-  exchange: "BSE" | "NSE" | "NFO" | "MCX" | "BFO" | "CDS";
-  ordertype: "MARKET" | "LIMIT" | "STOPLOSS_LIMIT" | "STOPLOSS_MARKET";
-  producttype: "DELIVERY" | "CARRYFORWARD" | "MARGIN" | "INTRADAY" | "BO";
+  ordertype: "MARKET"; // | "LIMIT" | "STOPLOSS_LIMIT" | "STOPLOSS_MARKET";
+  producttype: "CARRYFORWARD"; // "DELIVERY" | "CARRYFORWARD" | "MARGIN" | "INTRADAY" | "BO";
+  duration: "DAY"; // | "IOC";
+  exchange: string; //"BSE" | "NFO" | "NSE" | "BFO" | "CDS";
   tradingsymbol: string;
   symboltoken: string;
   quantity: string;
@@ -17,4 +22,29 @@ type Order = {
   // ordertag: string // It is optional to apply to an order to identify.
 };
 
-export const placeOrder = () => {};
+type OrderResponse = {
+  data: any;
+  errorcode: string | null;
+  message: string | null;
+  status: boolean;
+};
+
+export const placeOrder = async (
+  params: Order,
+  headers: any,
+  matched_strategy: strategy_prop
+) => {
+  const response: OrderResponse = await postRequest(
+    API.root + API.order_place,
+    params,
+    headers
+  );
+  console.log(response);
+  if (response.status) {
+    updateOrderStatus(matched_strategy, {
+      ...params,
+      ...response.data,
+    });
+  }
+  return response;
+};

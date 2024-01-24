@@ -1,6 +1,6 @@
 import { Filter } from "firebase-admin/firestore";
 import Firebase from "./instance";
-import { instrument_prop } from "../types";
+import { instrument_prop, ltp_prop, strategy_prop } from "../types";
 
 type SearchProps = {
   searchTerm: string;
@@ -92,7 +92,6 @@ export const searchInFirestore = async (params: SearchProps) => {
     response.forEach((res: any) => {
       const resData: instrument_prop = res.data();
       const { symbol, exch_seg, name, instrumenttype, expiry } = resData;
-      console.log(name + " : " + symbol);
       if (exch_seg !== "NSE") {
         const expiryDate = new Date(expiry);
         expiryDate.setHours(23, 59, 59, 999);
@@ -168,4 +167,28 @@ export const searchInFirestore = async (params: SearchProps) => {
     }
     return responseJSON;
   }
+};
+
+const getStrike = (price: number) => {
+  const priceLength = price.toString().length;
+  if (priceLength === 2 || priceLength === 3) {
+    return parseInt((price / 10).toString()) * 10;
+  } else if (priceLength === 4 || priceLength === 5) {
+    return parseInt((price / 100).toString()) * 100;
+  } else if (priceLength === 6 || priceLength === 7) {
+    return parseInt((price / 1000).toString()) * 1000;
+  } else if (priceLength === 8 || priceLength === 9) {
+    return parseInt((price / 10000).toString()) * 10000;
+  } else {
+    return price;
+  }
+};
+
+export const getSearchTerm = (
+  { instrument_to_watch }: strategy_prop,
+  item: ltp_prop
+) => {
+  return (
+    instrument_to_watch.name + " " + getStrike(Number(item.last_traded_price))
+  );
 };
