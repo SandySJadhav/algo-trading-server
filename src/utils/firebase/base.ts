@@ -3,6 +3,8 @@ import Firebase from "./instance";
 import fetch from "node-fetch";
 import { Timestamp } from "firebase-admin/firestore";
 import { sanitizeText } from "../helpers";
+import { instrument_prop } from "../types";
+import { cleanAllStrategies } from "./strategies";
 
 /*
   const NSE = [
@@ -51,17 +53,6 @@ const months = [
 const keywordExists = (list: any = [], text: string) =>
   !text || list.indexOf(text) !== -1 || list.length >= 30;
 
-type Prop = {
-  token: any;
-  symbol: string;
-  name: string;
-  expiry: string;
-  lotsize: any;
-  instrumenttype: string;
-  exch_seg: string;
-  tick_size: any;
-};
-
 const formatPayload = ({
   token,
   symbol,
@@ -71,9 +62,12 @@ const formatPayload = ({
   instrumenttype,
   exch_seg,
   tick_size,
-}: Prop) => {
+}: instrument_prop) => {
+  // name_keywords are related to name
+  const name_keywords: any = [];
   // rel_keywords are related to symbol
   const rel_keywords: any = [];
+
   const expiryDate = new Date(expiry || "12DEC9999");
   expiryDate.setHours(23, 59, 59, 999);
 
@@ -133,6 +127,25 @@ const formatPayload = ({
     }
   }
 
+  if (
+    ["FUTCOM", "FUTSTK", "FUTIDX"].includes(instrumenttype) ||
+    exch_seg === "NSE"
+  ) {
+    const midVal: number = parseInt("" + name.length / 2);
+    const minWordLen: number = midVal > 1 ? midVal : 2;
+
+    for (let i = name.length; i >= minWordLen; i--) {
+      const word = name.substring(0, i);
+      const text = sanitizeText(word);
+      if (!keywordExists(name_keywords, text)) {
+        name_keywords.push(text);
+      }
+      if (!keywordExists(name_keywords, word)) {
+        name_keywords.push(word);
+      }
+    }
+  }
+
   return {
     expiry_timestamp: Timestamp.fromDate(expiryDate),
     token,
@@ -143,13 +156,14 @@ const formatPayload = ({
     exch_seg,
     expiry,
     tick_size,
+    name_keywords,
     rel_keywords,
   };
 };
 
-const filterInstruments = (instruments: Prop[]) => {
+const filterInstruments = (instruments: instrument_prop[]) => {
   return instruments
-    .filter(({ exch_seg, expiry, symbol, instrumenttype }: Prop) => {
+    .filter(({ exch_seg, expiry, symbol, instrumenttype }: instrument_prop) => {
       if (supportedInstruments[exch_seg]?.[instrumenttype] && expiry) {
         // either NFO or MCX, load only next 1 month of data
         const expiryDate = new Date(expiry);
@@ -188,7 +202,7 @@ const filterInstruments = (instruments: Prop[]) => {
         instrumenttype,
         exch_seg,
         tick_size,
-      }: Prop) => {
+      }: instrument_prop) => {
         return formatPayload({
           token,
           symbol,
@@ -277,12 +291,12 @@ const processInstruments = async (
   await Promise.all(allRecords);
   console.log(
     isDelete
-      ? "Deleted all records from Firestore"
-      : `Pushed all records to Firestore in ${allRecords.length} batches`
+      ? `Deleted ${instruments.length} records from Firestore 🏄`
+      : `Pushed all records to Firestore in ${allRecords.length} batches 🏄`
   );
 };
 
-const processDataToFirebase = async () => {
+const initiateDataSync = async () => {
   const collection = await Firebase.db.collection("instruments");
   // delete existing data from firestore if already expired
   const deleteInstrumentList: any[] = [];
@@ -304,57 +318,62 @@ const processDataToFirebase = async () => {
   }
   if (deleteInstrumentList.length > 0) {
     // proceed to delete instruments from database;
+    console.log(`🚀 Found expired ${deleteInstrumentList.length} instruments`);
     await processInstruments(deleteInstrumentList, collection, true);
 
     // fetch all instruments from Angel one free json file
     const { instruments, hasError } = await fetchAllInstruments();
     if (hasError) {
       // store this data in Firebase database
-      console.log("Failed to download instruments from Angel One");
       return;
     }
 
     // now create new payload to upload new data
     const selectedInstruments = filterInstruments(instruments);
     if (selectedInstruments?.length > 0) {
-      console.log(
-        "Pushing NSE, NFO & MCX records to Firestore ---> Count: ",
-        selectedInstruments.length
-      );
+      console.log("🚀 Record Count: ", selectedInstruments.length);
       await processInstruments(selectedInstruments, collection, false);
     } else {
-      console.log(
-        "No records to delete. Everything already up to date in Firestore"
-      );
+      console.log("🚀 Everything up to date 🏄 ", new Date().toString());
     }
   } else {
-    console.log(
-      "No records to delete. Everything already up to date in Firestore"
-    );
+    console.log("🚀 Everything up to date 🏄 ", new Date().toString());
   }
 };
 
 /**
- * ┌──────────────── (optional) second (0 - 59)
- * │ ┌────────────── minute (0 - 59)
- * │ │ ┌──────────── hour (0 - 23)
- * │ │ │ ┌────────── day of month (1 - 31)
- * │ │ │ │ ┌──────── month (1 - 12, JAN-DEC)
- * │ │ │ │ │ ┌────── day of week (0 - 6, SUN-Mon), (0 to 6 are Sunday to Saturday; 7 is Sunday, the same as 0)
- * │ │ │ │ │ │
- * * * * * * *
+ * Croner to sync all instruments from Angel to Firestore
  */
-
 export const startCronerToSyncInstruments = () => {
-  let maxRuns: any = undefined;
-  let scheduledTimer: string = "0 0 5 * * 1-5";
+  /**
+   * ┌──────────────── (optional) second (0 - 59)
+   * │ ┌────────────── minute (0 - 59)
+   * │ │ ┌──────────── hour (0 - 23)
+   * │ │ │ ┌────────── day of month (1 - 31)
+   * │ │ │ │ ┌──────── month (1 - 12, JAN-DEC)
+   * │ │ │ │ │ ┌────── day of week (0 to 6 are Sunday to Saturday; 7 is Sunday, the same as 0)
+   * │ │ │ │ │ │
+   * * * * * * *
+   */
+  let maxRuns;
+  let scheduledTimer: string = "0 0 5 * * 1-5"; // At 05:00 on every day-of-week from Monday through Friday.
+  // for dev mode, run cron job im
   if (process.env.environment === "dev") {
     maxRuns = 1;
     scheduledTimer = "* * * * * *";
   }
-  // for dev mode, run cron job im
-  Cron(scheduledTimer, { maxRuns }, async () => {
-    // run cron job at 11.30PM in night
-    processDataToFirebase();
+  const instrumentSyncCroner = Cron(scheduledTimer, { maxRuns }, async () => {
+    console.log(
+      "🚀 Starting data sync with Angel and 🔥 store ",
+      new Date().toString()
+    );
+    cleanAllStrategies();
+    initiateDataSync();
   });
+  if (process.env.environment !== "dev") {
+    const newDate = new Date();
+    if (newDate.getHours() > 9 && newDate.getHours() < 23) {
+      instrumentSyncCroner.trigger();
+    }
+  }
 };

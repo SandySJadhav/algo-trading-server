@@ -42,11 +42,10 @@ export const onError = (error: any, port: any) => {
  */
 export const onListening = (server: any) => {
   const addr = server.address();
-  const bind = typeof addr === "string" ? "pipe " + addr : "port " + addr?.port;
   console.log(
-    `Server is running on http://localhost:${
+    `🚀 Server is running on http://localhost:${
       typeof addr !== "string" ? addr?.port : addr
-    } Ok`
+    }`
   );
 };
 
@@ -68,3 +67,19 @@ export const sanitizeText = (text: string) =>
     .replace(/[^a-zA-Z0-9\s:]/g, "")
     .trim()
     .toUpperCase();
+
+export const toNumber = (number: number) => number.toString();
+
+export const _atos = (array: any) => {
+  var newarray = [];
+  try {
+    for (var i = 0; i < array.length; i++) {
+      newarray.push(String.fromCharCode(array[i]));
+    }
+  } catch (e: any) {
+    throw new Error(e);
+  }
+
+  let token: string = JSON.stringify(newarray.join(""));
+  return token.replace(/\\u0000/g, "");
+};

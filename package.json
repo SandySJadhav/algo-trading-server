@@ -37,12 +37,12 @@
   },
   "dependencies": {
     "address": "^2.0.1",
+    "binary-parser": "^2.2.1",
     "cors": "^2.8.5",
     "croner": "^8.0.0",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "firebase-admin": "^12.0.0",
-    "http-errors": "^2.0.0",
     "node-fetch": "^2.7.0",
     "otplib": "^12.0.1",
     "ws": "^8.16.0"

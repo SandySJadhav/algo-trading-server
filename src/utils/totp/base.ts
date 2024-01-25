@@ -1,9 +1,5 @@
-import { authenticator } from 'otplib';
+import { authenticator } from "otplib";
 
-const generateTOTP = () => {
-    const secret = process.env.TOTP + "";
-    const token = authenticator.generate(secret);
-    return token;
-};
+const generateTOTP = () => authenticator.generate(process.env.TOTP + "");
 
 export default generateTOTP;
