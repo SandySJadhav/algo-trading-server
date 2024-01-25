@@ -41,8 +41,8 @@ export interface strategy_prop {
     | "COMPLETED"
     | "FAILED"
     | "RESET";
-  call_instrument_to_trade: instrument_prop;
-  put_instrument_to_trade: instrument_prop;
+  call_instrument_to_trade?: instrument_prop;
+  put_instrument_to_trade?: instrument_prop;
   entry_price: number;
   exit_price: number;
   profit_points: number;

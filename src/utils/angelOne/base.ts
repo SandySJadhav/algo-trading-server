@@ -537,25 +537,22 @@ class Angel {
           this.ACTIVE_STRATEGIES[matched_index].exit_price -
           this.ACTIVE_STRATEGIES[matched_index].entry_price -
           2;
+
+        const instrument_to_trade =
+          this.ACTIVE_STRATEGIES[matched_index].call_instrument_to_trade ||
+          this.ACTIVE_STRATEGIES[matched_index].put_instrument_to_trade;
+
         const order = await placeOrder(
           {
             duration: "DAY",
-            exchange:
-              this.ACTIVE_STRATEGIES[matched_index].put_instrument_to_trade
-                .exch_seg,
+            exchange: instrument_to_trade?.exch_seg + "",
             ordertype: "MARKET",
             producttype: "CARRYFORWARD",
-            quantity:
-              this.ACTIVE_STRATEGIES[matched_index].put_instrument_to_trade
-                .lotsize,
+            quantity: instrument_to_trade?.lotsize,
             variety: "NORMAL",
             transactiontype: "SELL",
-            symboltoken:
-              this.ACTIVE_STRATEGIES[matched_index].put_instrument_to_trade
-                .token,
-            tradingsymbol:
-              this.ACTIVE_STRATEGIES[matched_index].put_instrument_to_trade
-                .symbol,
+            symboltoken: instrument_to_trade?.token,
+            tradingsymbol: instrument_to_trade?.symbol + "",
           },
           this.headers,
           {
@@ -617,26 +614,27 @@ class Angel {
             duration: "DAY",
             exchange:
               this.ACTIVE_STRATEGIES[matched_index].call_instrument_to_trade
-                .exch_seg,
+                ?.exch_seg + "",
             ordertype: "MARKET",
             producttype: "CARRYFORWARD",
             quantity:
               this.ACTIVE_STRATEGIES[matched_index].call_instrument_to_trade
-                .lotsize,
+                ?.lotsize,
             variety: "NORMAL",
             transactiontype: "BUY",
             symboltoken:
               this.ACTIVE_STRATEGIES[matched_index].call_instrument_to_trade
-                .token,
+                ?.token,
             tradingsymbol:
               this.ACTIVE_STRATEGIES[matched_index].call_instrument_to_trade
-                .symbol,
+                ?.symbol + "",
           },
           this.headers,
           { ...this.ACTIVE_STRATEGIES[matched_index], order_status: "PLACED" }
         );
         if (order.status) {
           this.ACTIVE_STRATEGIES[matched_index].order_status = "PLACED";
+          delete this.ACTIVE_STRATEGIES[matched_index].put_instrument_to_trade;
         } else {
           this.ACTIVE_STRATEGIES[matched_index].order_status = "IDLE";
           this.ACTIVE_STRATEGIES[matched_index].entries_taken_today--;
@@ -661,26 +659,27 @@ class Angel {
             duration: "DAY",
             exchange:
               this.ACTIVE_STRATEGIES[matched_index].put_instrument_to_trade
-                .exch_seg,
+                ?.exch_seg + "",
             ordertype: "MARKET",
             producttype: "CARRYFORWARD",
             quantity:
               this.ACTIVE_STRATEGIES[matched_index].put_instrument_to_trade
-                .lotsize,
+                ?.lotsize,
             variety: "NORMAL",
             transactiontype: "BUY",
             symboltoken:
               this.ACTIVE_STRATEGIES[matched_index].put_instrument_to_trade
-                .token,
+                ?.token,
             tradingsymbol:
               this.ACTIVE_STRATEGIES[matched_index].put_instrument_to_trade
-                .symbol,
+                ?.symbol + "",
           },
           this.headers,
           { ...this.ACTIVE_STRATEGIES[matched_index], order_status: "PLACED" }
         );
         if (order.status) {
           this.ACTIVE_STRATEGIES[matched_index].order_status = "PLACED";
+          delete this.ACTIVE_STRATEGIES[matched_index].put_instrument_to_trade;
         } else {
           this.ACTIVE_STRATEGIES[matched_index].order_status = "IDLE";
           this.ACTIVE_STRATEGIES[matched_index].entries_taken_today--;
