@@ -10,6 +10,8 @@ const corsOpts = {
 app.use(cors(corsOpts));
 app.use(express.json());
 
+app.use(express.static("public"));
+
 app.use("/search", searchRouter);
 
 // catch 404
