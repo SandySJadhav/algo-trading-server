@@ -96,7 +96,7 @@ class Angel {
       "X-ClientPublicIP": "",
       Authorization: "",
     };
-    console.log("🚀 Cleanup completed ", new Date().toString());
+    console.log("🚀 Cleanup done ", new Date().toString());
   }
 
   /**
@@ -118,13 +118,13 @@ class Angel {
     });
     if (this.ACTIVE_STRATEGIES.length === 0) {
       console.log("🚀 No any active strategies found 🏄!");
-      return this.cleanup();
+      return;
     }
     // fetch candle history for above strategies
     const activeCandles = await this.getAllInstrumentCandleHistory();
     if (!activeCandles) {
       console.log("🚀 All markets are closed now 🏄!");
-      return this.cleanup();
+      return;
     }
     // initiate new live feed
     this.initiateLiveFeed();
@@ -193,8 +193,8 @@ class Angel {
         const todate = `${year}-${formatNumberInTime(
           month + 1
         )}-${formatNumberInTime(day)} ${formatNumberInTime(
-          start_entry_after
-        )}:${formatNumberInTime(0)}`;
+          start_entry_after - 1
+        )}:${formatNumberInTime(59)}`;
 
         responses.push(
           postRequest(
@@ -274,49 +274,6 @@ class Angel {
     }
   }
 
-  closeOldFeeds() {
-    console.log("🚀 Closing old feeds ", new Date().toString());
-    // close previous live feed
-    const allMCXInstruments: string[] = [];
-    this.ACTIVE_STRATEGIES.forEach((strategy: any) => {
-      if (strategy.instrument_to_watch.exch_seg === "MCX") {
-        allMCXInstruments.push(strategy.instrument_to_watch.token);
-      }
-    });
-
-    const payload: {
-      action: number;
-      params: {
-        mode: number;
-        tokenList: any[];
-      };
-    } = {
-      action: ACTION.Unsubscribe,
-      params: {
-        mode: MODE.LTP,
-        tokenList: [],
-      },
-    };
-
-    if (allMCXInstruments.length > 0) {
-      payload.params.tokenList.push({
-        exchangeType: EXCHANGES.mcx_fo,
-        tokens: allMCXInstruments,
-      });
-    }
-
-    if (payload.params.tokenList.length > 0) {
-      this.WS.send(JSON.stringify(payload));
-    }
-    if (this.HEARTBEAT_CRON) {
-      this.HEARTBEAT_CRON.stop();
-      this.HEARTBEAT_CRON = null;
-    }
-    this.WS.close?.();
-    this.WS = null;
-    console.log("🚀 Closed old feeds ", new Date().toString());
-  }
-
   initiateStrategyLoaderCroner() {
     console.log(
       "🚀 Initializing strategy loader croner ",
@@ -337,9 +294,9 @@ class Angel {
           "🚀 Strategy loader 15 minute croner execution Success 🥳 ",
           new Date().toString()
         );
-        if (this.WS) {
-          this.closeOldFeeds();
-        }
+        // close old connections
+        this.WS?.close?.();
+        // trigger new strategy
         this.loadStrategies();
       }
     );
@@ -398,20 +355,19 @@ class Angel {
       if (subscription_mode.parse(data)?.subscription_mode === MODE.LTP) {
         const res = await this.getLTP(data);
         res.token = JSON.parse(res.token);
-        const matched_index: number = this.ACTIVE_STRATEGIES.findIndex(
-          (strategy: any) => strategy.instrument_to_watch.token === res.token
-        );
-        if (matched_index !== -1) {
-          const tick_size = Number(
-            this.ACTIVE_STRATEGIES[matched_index].instrument_to_watch.tick_size
-          );
-          if (tick_size > 1) {
-            res.last_traded_price = Number(res.last_traded_price) / tick_size;
-          } else {
-            res.last_traded_price = Number(res.last_traded_price);
+        this.ACTIVE_STRATEGIES.forEach((strategy: any, index) => {
+          if (strategy.instrument_to_watch.token === res.token) {
+            const tick_size = Number(
+              this.ACTIVE_STRATEGIES[index].instrument_to_watch.tick_size
+            );
+            if (tick_size > 1) {
+              res.last_traded_price = Number(res.last_traded_price) / tick_size;
+            } else {
+              res.last_traded_price = Number(res.last_traded_price);
+            }
+            this.handleExecution(res, index);
           }
-          this.handleExecution(res, matched_index);
-        }
+        });
       } else if (data.toString() !== "pong") {
         console.log(
           "🔥 Untracked message -> ",
@@ -441,8 +397,7 @@ class Angel {
 
   async updateCALLPUTStrikes(searchTerm: string, matched_index: number) {
     const response = await searchInFirestore({ searchTerm });
-    if (response.statusCode === 200 && response.data?.length === 2) {
-      let checker = 0;
+    if (response.statusCode === 200 && response.data?.length === 1) {
       const call_instrument_to_trade = <instrument_prop>(
         response.data.find(
           (item: instrument_prop) => item.rel_keywords.indexOf("CE") !== -1
@@ -451,7 +406,6 @@ class Angel {
       if (call_instrument_to_trade) {
         this.ACTIVE_STRATEGIES[matched_index].call_instrument_to_trade =
           call_instrument_to_trade;
-        ++checker;
       }
       const put_instrument_to_trade = <instrument_prop>(
         response.data.find(
@@ -461,19 +415,20 @@ class Angel {
       if (put_instrument_to_trade) {
         this.ACTIVE_STRATEGIES[matched_index].put_instrument_to_trade =
           put_instrument_to_trade;
-        ++checker;
       }
-      if (checker === 2) {
+      if (
+        this.ACTIVE_STRATEGIES[matched_index].call_instrument_to_trade &&
+        this.ACTIVE_STRATEGIES[matched_index].put_instrument_to_trade
+      ) {
         console.log(
           "🚀 Matching call & put instruments found ",
           new Date().toString()
         );
-        this.ACTIVE_STRATEGIES[matched_index].strike_selection_in_progress =
-          false;
+        this.ACTIVE_STRATEGIES[matched_index].order_status = "IDLE";
       }
     } else {
       console.log(
-        `🔥 Strike price selection failed for ${searchTerm}`,
+        `🔥 Strike price selection API failed for ${searchTerm}`,
         response,
         new Date().toString()
       );
@@ -482,39 +437,61 @@ class Angel {
 
   handleExecution(item: ltp_prop, matched_index: number) {
     const matched_strategy = this.ACTIVE_STRATEGIES[matched_index];
+    const {
+      id,
+      order_status,
+      call_instrument_to_trade,
+      put_instrument_to_trade,
+      entries_taken_today,
+      max_entries_per_day,
+      previous_candle,
+      instrument_to_watch,
+    } = matched_strategy;
 
-    if (this.ACTIVE_STRATEGIES[matched_index].order_in_progress) {
-      console.log(
-        `🚀 Order placement in progress ${item.token}`,
-        new Date().toString()
-      );
-    } else if (
-      this.ACTIVE_STRATEGIES[matched_index].strike_selection_in_progress
-    ) {
-      console.log(`🚀 Strike selection ${item.token}`, new Date().toString());
-      return;
-    } else if (
-      !matched_strategy.call_instrument_to_trade ||
-      !matched_strategy.put_instrument_to_trade
-    ) {
+    if (order_status !== "IDLE") {
+      switch (order_status) {
+        case "STRIKE_SELECTION":
+          console.log(
+            `🚀 Strike selection in progress for strategy ${id} `,
+            new Date().toString()
+          );
+          return;
+        case "PLACED":
+          // placed order, waiting for exit trigger
+          this.handleExitStrategy(item, matched_index);
+          return;
+        case "PENDING":
+          // placing order, waiting for exit trigger
+          console.log(
+            `🚀 Order placement in progress for strategy ${id} `,
+            new Date().toString()
+          );
+          return;
+        case "FAILED":
+          console.log(`🚀 Order exit failed ${id} `, new Date().toString());
+          return;
+        default:
+          console.log(
+            `🚀 Strategy: ${id}, Operations in progress -> ${order_status} `,
+            new Date().toString()
+          );
+          return;
+      }
+    } else if (!call_instrument_to_trade || !put_instrument_to_trade) {
       console.log(
         "🚀 Searching for call & put instruments ",
         new Date().toString()
       );
-      this.ACTIVE_STRATEGIES[matched_index].strike_selection_in_progress = true;
-      const searchTerm = getSearchTerm(matched_strategy, item);
-      this.updateCALLPUTStrikes(searchTerm, matched_index);
+      this.ACTIVE_STRATEGIES[matched_index].order_status = "STRIKE_SELECTION";
+      const searchTermCE = getSearchTerm(matched_strategy, item) + " " + "CE";
+      this.updateCALLPUTStrikes(searchTermCE, matched_index);
+      const searchTermPE = getSearchTerm(matched_strategy, item) + " " + "PE";
+      this.updateCALLPUTStrikes(searchTermPE, matched_index);
       return;
-    }
-
-    if (
-      matched_strategy.entries_taken_today <
-        matched_strategy.max_entries_per_day &&
-      matched_strategy.order_status === "IDLE"
-    ) {
+    } else if (entries_taken_today < max_entries_per_day) {
       if (
-        matched_strategy.previous_candle === "CROSSES" &&
-        matched_strategy.instrument_to_watch.exch_seg === "MCX"
+        previous_candle === "CROSSES" &&
+        instrument_to_watch.exch_seg === "MCX"
       ) {
         this.handleCrossing(item, matched_index);
       } else {
@@ -526,7 +503,78 @@ class Angel {
     }
   }
 
-  async handleCrossing(item: any, matched_index: number) {
+  async handleExitStrategy(item: ltp_prop, matched_index: number) {
+    const newDate = new Date();
+    const hours = newDate.getHours();
+    const minutes = newDate.getMinutes();
+    const matched_strategy = this.ACTIVE_STRATEGIES[matched_index];
+
+    if (Number(hours + "." + minutes) <= matched_strategy.stop_entry_after) {
+      if (
+        Number(item.last_traded_price) >=
+        matched_strategy.entry_price + matched_strategy.trailing_sl_points + 5
+      ) {
+        // check for target, increase the sl
+        this.ACTIVE_STRATEGIES[matched_index].entry_price =
+          matched_strategy.entry_price + matched_strategy.trailing_sl_points;
+        console.log(
+          `🚀 Trailing sl for ${matched_strategy.id}`,
+          new Date().toString()
+        );
+      } else if (
+        Number(item.last_traded_price) <=
+        matched_strategy.entry_price - matched_strategy.trailing_sl_points
+      ) {
+        this.ACTIVE_STRATEGIES[matched_index].exit_price = Number(
+          item.last_traded_price
+        );
+        // check stoploss
+        console.log(
+          `🚀 SL hit for ${matched_strategy.id}`,
+          new Date().toString()
+        );
+        this.ACTIVE_STRATEGIES[matched_index].profit_points =
+          this.ACTIVE_STRATEGIES[matched_index].exit_price -
+          this.ACTIVE_STRATEGIES[matched_index].entry_price -
+          2;
+        const order = await placeOrder(
+          {
+            duration: "DAY",
+            exchange:
+              this.ACTIVE_STRATEGIES[matched_index].put_instrument_to_trade
+                .exch_seg,
+            ordertype: "MARKET",
+            producttype: "CARRYFORWARD",
+            quantity:
+              this.ACTIVE_STRATEGIES[matched_index].put_instrument_to_trade
+                .lotsize,
+            variety: "NORMAL",
+            transactiontype: "SELL",
+            symboltoken:
+              this.ACTIVE_STRATEGIES[matched_index].put_instrument_to_trade
+                .token,
+            tradingsymbol:
+              this.ACTIVE_STRATEGIES[matched_index].put_instrument_to_trade
+                .symbol,
+          },
+          this.headers,
+          {
+            ...this.ACTIVE_STRATEGIES[matched_index],
+            order_status: "COMPLETED",
+          }
+        );
+        if (order.status) {
+          this.ACTIVE_STRATEGIES[matched_index].order_status = "COMPLETED";
+        } else {
+          this.ACTIVE_STRATEGIES[matched_index].order_status = "FAILED";
+        }
+      }
+    } else {
+      // close position as timelimit exceeded
+    }
+  }
+
+  async handleCrossing(item: ltp_prop, matched_index: number) {
     const newDate = new Date();
     const hours = newDate.getHours();
     const minutes = newDate.getMinutes();
@@ -557,12 +605,14 @@ class Angel {
         // buy CE here
         this.ACTIVE_STRATEGIES[matched_index].entries_taken_today++;
         this.ACTIVE_STRATEGIES[matched_index].order_status = "PENDING";
-        this.ACTIVE_STRATEGIES[matched_index].order_in_progress = true;
+        this.ACTIVE_STRATEGIES[matched_index].entry_price = Number(
+          item.last_traded_price
+        );
         console.log(
           `🚀 CE Order placement criteria met for strategy ${this.ACTIVE_STRATEGIES[matched_index].id}`,
           new Date().toString()
         );
-        await placeOrder(
+        const order = await placeOrder(
           {
             duration: "DAY",
             exchange:
@@ -583,9 +633,14 @@ class Angel {
                 .symbol,
           },
           this.headers,
-          this.ACTIVE_STRATEGIES[matched_index]
+          { ...this.ACTIVE_STRATEGIES[matched_index], order_status: "PLACED" }
         );
-        this.ACTIVE_STRATEGIES[matched_index].order_in_progress = false;
+        if (order.status) {
+          this.ACTIVE_STRATEGIES[matched_index].order_status = "PLACED";
+        } else {
+          this.ACTIVE_STRATEGIES[matched_index].order_status = "IDLE";
+          this.ACTIVE_STRATEGIES[matched_index].entries_taken_today--;
+        }
       } else if (
         Number(item.last_traded_price) <=
         previous_candle_low - matched_strategy.buffer_points
@@ -594,12 +649,14 @@ class Angel {
         // buy PE here
         this.ACTIVE_STRATEGIES[matched_index].entries_taken_today++;
         this.ACTIVE_STRATEGIES[matched_index].order_status = "PENDING";
-        this.ACTIVE_STRATEGIES[matched_index].order_in_progress = true;
+        this.ACTIVE_STRATEGIES[matched_index].entry_price = Number(
+          item.last_traded_price
+        );
         console.log(
           `🚀 PE Order placement criteria met for strategy ${this.ACTIVE_STRATEGIES[matched_index].id}`,
           new Date().toString()
         );
-        await placeOrder(
+        const order = await placeOrder(
           {
             duration: "DAY",
             exchange:
@@ -620,9 +677,14 @@ class Angel {
                 .symbol,
           },
           this.headers,
-          this.ACTIVE_STRATEGIES[matched_index]
+          { ...this.ACTIVE_STRATEGIES[matched_index], order_status: "PLACED" }
         );
-        this.ACTIVE_STRATEGIES[matched_index].order_in_progress = false;
+        if (order.status) {
+          this.ACTIVE_STRATEGIES[matched_index].order_status = "PLACED";
+        } else {
+          this.ACTIVE_STRATEGIES[matched_index].order_status = "IDLE";
+          this.ACTIVE_STRATEGIES[matched_index].entries_taken_today--;
+        }
       }
     }
   }

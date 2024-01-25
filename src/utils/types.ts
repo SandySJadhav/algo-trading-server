@@ -33,17 +33,19 @@ export interface strategy_prop {
   trailing_sl_points: number;
   data: any;
   market_status?: "OPEN" | "CLOSED";
-  order_status?:
+  order_status:
     | "IDLE"
-    | "OPEN"
+    | "STRIKE_SELECTION"
     | "PLACED"
     | "PENDING"
     | "COMPLETED"
-    | "CANCELLED";
+    | "FAILED"
+    | "RESET";
   call_instrument_to_trade: instrument_prop;
   put_instrument_to_trade: instrument_prop;
-  strike_selection_in_progress?: boolean;
-  order_in_progress?: boolean;
+  entry_price: number;
+  exit_price: number;
+  profit_points: number;
 }
 
 export interface ltp_prop {

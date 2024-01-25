@@ -10,7 +10,6 @@ const API = {
     logout: '/rest/secure/angelbroking/user/v1/logout',
 
     order_place: '/rest/secure/angelbroking/order/v1/placeOrder',
-    // "order_status": "/order-service/rest/secure/angelbroking/order/v1/orderStatus",
     order_get_book: '/rest/secure/angelbroking/order/v1/getOrderBook',
     order_modify: '/rest/secure/angelbroking/order/v1/modifyOrder',
     order_cancel: '/rest/secure/angelbroking/order/v1/cancelOrder',

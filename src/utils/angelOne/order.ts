@@ -44,6 +44,7 @@ export const placeOrder = async (
     updateOrderStatus(matched_strategy, {
       ...params,
       ...response.data,
+      strategy_id: matched_strategy.id,
     });
   }
   return response;

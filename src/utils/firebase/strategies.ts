@@ -2,15 +2,24 @@ import { instrument_prop, strategy_prop } from "../types";
 import Firebase from "./instance";
 
 export const updateOrderStatus = async (
-  matched_strategy: strategy_prop,
+  {
+    id,
+    entries_taken_today,
+    order_status,
+    entry_price,
+    exit_price,
+    profit_points,
+  }: strategy_prop,
   order: any
 ) => {
-  const { entries_taken_today, order_status } = matched_strategy;
   Firebase.db.collection("orders").doc(order.orderid).set(order);
-  Firebase.db
-    .collection("strategies")
-    .doc(matched_strategy.id)
-    .update({ order_status, entries_taken_today });
+  Firebase.db.collection("strategies").doc(id).update({
+    order_status,
+    entries_taken_today,
+    entry_price,
+    exit_price,
+    profit_points,
+  });
 };
 
 export const cleanAllStrategies = async () => {
@@ -27,12 +36,12 @@ export const cleanAllStrategies = async () => {
       ...resData,
       entries_taken_today: 0,
       order_status: "IDLE",
+      entry_price: 0,
+      exit_price: 0,
+      profit_points: 0,
     });
   });
-  console.log(
-    "🚀 Reset strategies completed in 🔥 store ",
-    new Date().toString()
-  );
+  console.log("🚀 Reset strategies done in 🔥 store ", new Date().toString());
   return batch.commit();
 };
 
