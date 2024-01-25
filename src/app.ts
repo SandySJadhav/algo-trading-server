@@ -16,10 +16,7 @@ app.use("/search", searchRouter);
 
 // catch 404
 app.use(function (req, res) {
-  return res.status(404).send({
-    statusCode: 404,
-    message: "Page not found 🔥!",
-  });
+  res.redirect("/404.html");
 });
 
 export default app;
