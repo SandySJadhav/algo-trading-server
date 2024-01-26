@@ -40,12 +40,18 @@ export const placeOrder = async (
     headers
   );
   console.log(response);
+  let data: any = {
+    ...params,
+    strategy_id: matched_strategy.id,
+  };
   if (response.status) {
-    updateOrderStatus(matched_strategy, {
-      ...params,
+    data = {
+      ...data,
       ...response.data,
-      strategy_id: matched_strategy.id,
-    });
+    };
+  } else {
+    data.errorcode = response.errorcode;
   }
+  updateOrderStatus(matched_strategy, data);
   return response;
 };
