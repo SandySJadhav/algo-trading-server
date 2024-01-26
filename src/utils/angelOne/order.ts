@@ -1,3 +1,4 @@
+import { logger } from 'firebase-functions/v2';
 import { updateOrderStatus } from '../firebase/strategies';
 import { postRequest } from '../http.interceptor';
 import { strategy_prop } from '../types';
@@ -32,22 +33,22 @@ type OrderResponse = {
 export const placeOrder = async (
   params: Order,
   headers: any,
-  matched_strategy: strategy_prop,
+  matched_strategy: strategy_prop
 ) => {
   const response: OrderResponse = await postRequest(
     API.root + API.order_place,
     params,
-    headers,
+    headers
   );
-  console.log(response);
+  logger.log(response);
   let data: any = {
     ...params,
-    strategy_id: matched_strategy.id,
+    strategy_id: matched_strategy.id
   };
   if (response.status) {
     data = {
       ...data,
-      ...response.data,
+      ...response.data
     };
   } else {
     data.errorcode = response.errorcode;

@@ -5,6 +5,7 @@ import { Timestamp } from 'firebase-admin/firestore';
 import { sanitizeText } from '../helpers';
 import { instrument_prop } from '../types';
 import { cleanAllStrategies } from './strategies';
+import { logger } from 'firebase-functions/v2';
 
 /*
   const NSE = [
@@ -16,7 +17,7 @@ import { cleanAllStrategies } from './strategies';
 const supportedInstruments: any = {
   MCX: {
     OPTFUT: true, // commodity futures
-    FUTCOM: true, // commodity futures
+    FUTCOM: true // commodity futures
     // "COMDTY", // not supported
     // "FUTIDX", // not supported
     // "AMXIDX", // not supported
@@ -25,8 +26,8 @@ const supportedInstruments: any = {
     OPTSTK: true, // stock options
     OPTIDX: true, // index options
     FUTSTK: true, // stock futures
-    FUTIDX: true, // index futures
-  },
+    FUTIDX: true // index futures
+  }
 };
 
 const months = [
@@ -41,7 +42,7 @@ const months = [
   'SEP',
   'OCT',
   'NOV',
-  'DEC',
+  'DEC'
 ];
 
 /**
@@ -61,7 +62,7 @@ const formatPayload = ({
   lotsize,
   instrumenttype,
   exch_seg,
-  tick_size,
+  tick_size
 }: instrument_prop) => {
   // name_keywords are related to name
   const name_keywords: any = [];
@@ -119,9 +120,9 @@ const formatPayload = ({
           }
         }
       } else {
-        console.log(
+        logger.log(
           'Something is missing with ["OPTFUT", "OPTSTK", "OPTIDX"], found option with do not ends with CE or PE',
-          symbol,
+          symbol
         );
       }
     }
@@ -157,7 +158,7 @@ const formatPayload = ({
     expiry,
     tick_size,
     name_keywords,
-    rel_keywords,
+    rel_keywords
   };
 };
 
@@ -201,7 +202,7 @@ const filterInstruments = (instruments: instrument_prop[]) => {
         lotsize,
         instrumenttype,
         exch_seg,
-        tick_size,
+        tick_size
       }: instrument_prop) => {
         return formatPayload({
           token,
@@ -211,19 +212,19 @@ const filterInstruments = (instruments: instrument_prop[]) => {
           lotsize,
           instrumenttype,
           exch_seg,
-          tick_size,
+          tick_size
         });
-      },
+      }
     );
 };
 
 const fetchAllInstruments = async () => {
   let data = '';
   const response: any = {};
-  console.log('Downloading all instrument data From Angel One...');
+  logger.log('Downloading all instrument data From Angel One...');
   await new Promise((resolve: any) => {
     fetch(
-      'https://margincalculator.angelbroking.com/OpenAPI_File/files/OpenAPIScripMaster.json',
+      'https://margincalculator.angelbroking.com/OpenAPI_File/files/OpenAPIScripMaster.json'
     )
       .then((response) => response.body)
       .then((res) =>
@@ -236,17 +237,17 @@ const fetchAllInstruments = async () => {
           })
           .on('end', () => {
             if (!response.hasError) {
-              console.log('Downloaded all instrument data From Angel One');
+              logger.log('Downloaded all instrument data From Angel One');
               response.instruments = JSON.parse(data);
               resolve('SUCCESS');
             }
-          }),
+          })
       )
       .catch((err) => {
         response.hasError = true;
-        console.log(
+        logger.log(
           'Downloaded all instruments from Angel One failed ********',
-          err,
+          err
         );
         resolve('FAILED');
       });
@@ -274,7 +275,7 @@ const createBatchAndPushDocs = async (instruments: any, collection: any) => {
 const processInstruments = async (
   instruments: any,
   collection: any,
-  isDelete: any = false,
+  isDelete: any = false
 ) => {
   const chunkSize = 50;
   const allRecords = [];
@@ -289,10 +290,10 @@ const processInstruments = async (
     }
   }
   await Promise.all(allRecords);
-  console.log(
+  logger.log(
     isDelete
       ? `Deleted ${instruments.length} records from Firestore 🏄`
-      : `Pushed all records to Firestore in ${allRecords.length} batches 🏄`,
+      : `Pushed all records to Firestore in ${allRecords.length} batches 🏄`
   );
 };
 
@@ -313,12 +314,12 @@ const initiateDataSync = async () => {
       deleteInstrumentList.push(doc.ref);
     });
   } catch (error) {
-    console.log(JSON.parse(JSON.stringify(error)));
+    logger.log(JSON.parse(JSON.stringify(error)));
     return;
   }
   if (deleteInstrumentList.length > 0) {
     // proceed to delete instruments from database;
-    console.log(`🚀 Found expired ${deleteInstrumentList.length} instruments`);
+    logger.log(`🚀 Found expired ${deleteInstrumentList.length} instruments`);
     await processInstruments(deleteInstrumentList, collection, true);
 
     // fetch all instruments from Angel one free json file
@@ -331,13 +332,13 @@ const initiateDataSync = async () => {
     // now create new payload to upload new data
     const selectedInstruments = filterInstruments(instruments);
     if (selectedInstruments?.length > 0) {
-      console.log('🚀 Record Count: ', selectedInstruments.length);
+      logger.log('🚀 Record Count: ', selectedInstruments.length);
       await processInstruments(selectedInstruments, collection, false);
     } else {
-      console.log('🚀 Everything up to date 🏄 ', new Date().toString());
+      logger.log('🚀 Everything up to date 🏄 ', new Date().toString());
     }
   } else {
-    console.log('🚀 Everything up to date 🏄 ', new Date().toString());
+    logger.log('🚀 Everything up to date 🏄 ', new Date().toString());
   }
 };
 
@@ -363,9 +364,9 @@ export const startCronerToSyncInstruments = () => {
     scheduledTimer = '* * * * * *';
   }
   const instrumentSyncCroner = Cron(scheduledTimer, { maxRuns }, async () => {
-    console.log(
+    logger.log(
       '🚀 Starting data sync with Angel and 🔥 store ',
-      new Date().toString(),
+      new Date().toString()
     );
     cleanAllStrategies();
     initiateDataSync();

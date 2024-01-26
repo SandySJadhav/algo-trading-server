@@ -1,16 +1,4 @@
 /**
- * Event listener for HTTP server "listening" event.
- */
-export const onListening = (server: any) => {
-  const addr = server.address();
-  console.log(
-    `🚀 Server is running on http://localhost:${
-      typeof addr !== 'string' ? addr?.port : addr
-    }`,
-  );
-};
-
-/**
  * @param text String
  * @returns String
  */

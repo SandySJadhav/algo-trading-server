@@ -11,7 +11,7 @@ import { logger, setGlobalOptions } from 'firebase-functions/v2';
 setGlobalOptions({
   maxInstances: 10,
   region: 'asia-east2',
-  timeoutSeconds: 3,
+  timeoutSeconds: 5
 });
 
 const app = express();
@@ -25,12 +25,11 @@ app.use('/search', searchRouter);
 app.use(function (req, res) {
   res.status(404).send({
     statusCode: 404,
-    message: '🔥 Resource not found!',
+    message: '🔥 Resource not found!'
   });
 });
 
 app.listen('3001', () => {
-  console.log(`🚀 Server is running on http://localhost:3001`);
   logger.info(`🚀 Server is running on http://localhost:3001`);
   // start daily instrument sync job
   startCronerToSyncInstruments();

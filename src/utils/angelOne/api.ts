@@ -18,7 +18,7 @@ const API = {
   convert_position: '/rest/secure/angelbroking/order/v1/convertPosition',
 
   candle_data: '/rest/secure/angelbroking/historical/v1/getCandleData',
-  search_scrip: '/rest/secure/angelbroking/order/v1/searchScrip',
+  search_scrip: '/rest/secure/angelbroking/order/v1/searchScrip'
 };
 
 export default API;

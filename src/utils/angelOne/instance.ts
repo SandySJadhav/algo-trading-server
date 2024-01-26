@@ -1,5 +1,6 @@
 import Cron from 'croner';
 import Angel from './base';
+import { logger } from 'firebase-functions/v2';
 
 let angelInstance: Angel | null;
 
@@ -28,16 +29,16 @@ const AngelLogin = async () => {
     { maxRuns: loginMaxRuns },
     async () => {
       if (angelInstance?.JWTTOKEN) {
-        console.log(
+        logger.log(
           '🚀 Running previous Angel instance cleanups ',
-          new Date().toString(),
+          new Date().toString()
         );
         angelInstance.cleanup();
         angelInstance = null;
       }
-      console.log('🚀 Angel Login Croner executed ', new Date().toString());
+      logger.log('🚀 Angel Login Croner executed ', new Date().toString());
       angelInstance = new Angel();
-    },
+    }
   );
 
   if (process.env.ENVIRONMENT !== 'dev') {

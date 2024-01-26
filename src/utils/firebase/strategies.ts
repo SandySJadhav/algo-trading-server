@@ -1,3 +1,4 @@
+import { logger } from 'firebase-functions/v2';
 import { instrument_prop, strategy_prop } from '../types';
 import Firebase from './instance';
 
@@ -8,9 +9,9 @@ export const updateOrderStatus = async (
     order_status,
     entry_price,
     exit_price,
-    profit_points,
+    profit_points
   }: strategy_prop,
-  order: any,
+  order: any
 ) => {
   Firebase.db.collection('orders').doc(order.orderid).set(order);
   Firebase.db.collection('strategies').doc(id).update({
@@ -18,7 +19,7 @@ export const updateOrderStatus = async (
     entries_taken_today,
     entry_price,
     exit_price,
-    profit_points,
+    profit_points
   });
 };
 
@@ -26,7 +27,7 @@ export const cleanAllStrategies = async () => {
   const strategies_colllection = Firebase.db.collection('strategies');
   const response = await strategies_colllection.get();
   if (response.empty) {
-    console.log('🚀 Nothing to reset in 🔥 store ', new Date().toString());
+    logger.log('🚀 Nothing to reset in 🔥 store ', new Date().toString());
     return [];
   }
   const batch = Firebase.db.batch();
@@ -38,17 +39,17 @@ export const cleanAllStrategies = async () => {
       order_status: 'IDLE',
       entry_price: 0,
       exit_price: 0,
-      profit_points: 0,
+      profit_points: 0
     });
   });
-  console.log('🚀 Reset strategies done in 🔥 store ', new Date().toString());
+  logger.log('🚀 Reset strategies done in 🔥 store ', new Date().toString());
   return batch.commit();
 };
 
 export const fetchAllActiveStrategies = async () => {
-  console.log(
+  logger.log(
     '🚀 Fetching all active strategies from 🔥 store ',
-    new Date().toString(),
+    new Date().toString()
   );
   const strategies_colllection = Firebase.db.collection('strategies');
   const response = await strategies_colllection
@@ -56,9 +57,9 @@ export const fetchAllActiveStrategies = async () => {
     .get();
 
   if (response.empty) {
-    console.log(
+    logger.log(
       '🚀 No any active strategies found in 🔥 store',
-      new Date().toString(),
+      new Date().toString()
     );
     return [];
   }
@@ -95,7 +96,7 @@ export const fetchAllActiveStrategies = async () => {
 
     actual_instruments.forEach((instrument) => {
       const strategy = data.find(
-        (ms) => ms.instrument_to_watch.id === instrument.id,
+        (ms) => ms.instrument_to_watch.id === instrument.id
       );
       if (strategy) {
         strategy.instrument_to_watch = <instrument_prop>instrument.data();
@@ -109,9 +110,9 @@ export const fetchAllActiveStrategies = async () => {
       }
     });
 
-    console.log(
+    logger.log(
       `🚀 Total ${result.length} active strategies found in 🔥 store`,
-      new Date().toString(),
+      new Date().toString()
     );
     resolve(result);
   });

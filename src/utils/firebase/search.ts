@@ -1,5 +1,6 @@
 import Firebase from './instance';
 import { instrument_prop, ltp_prop, strategy_prop } from '../types';
+import { logger } from 'firebase-functions/v2';
 
 type SearchProps = {
   searchTerm: string;
@@ -17,7 +18,7 @@ const months: string[] = [
   'SEP',
   'OCT',
   'NOV',
-  'DEC',
+  'DEC'
 ];
 
 const getFilteredResults = (results: instrument_prop[], query: string[]) => {
@@ -83,7 +84,7 @@ export const searchInFirestore = async (params: SearchProps) => {
       return {
         status: 'SUCCESS',
         statusCode: 200,
-        data: [],
+        data: []
       };
     }
 
@@ -121,7 +122,7 @@ export const searchInFirestore = async (params: SearchProps) => {
 
         results.push({
           ...resData,
-          displayName: newSymbol,
+          displayName: newSymbol
         });
       } else {
         results.push(resData);
@@ -133,10 +134,10 @@ export const searchInFirestore = async (params: SearchProps) => {
     return {
       status: 'SUCCESS',
       statusCode: 200,
-      data,
+      data
     };
   } catch (error) {
-    console.log(error);
+    logger.log(error);
     let responseJSON;
     try {
       const jsonRes = JSON.parse(JSON.stringify(error));
@@ -146,14 +147,14 @@ export const searchInFirestore = async (params: SearchProps) => {
           status: 'ERROR',
           statusCode: 503,
           message: 'Service Unavailable',
-          error: jsonRes,
+          error: jsonRes
         };
       } else {
         responseJSON = {
           status: 'ERROR',
           statusCode: 500,
           message: 'Internal Server Error',
-          error: jsonRes,
+          error: jsonRes
         };
       }
     } catch (err) {
@@ -161,7 +162,7 @@ export const searchInFirestore = async (params: SearchProps) => {
         status: 'ERROR',
         statusCode: 500,
         message: 'Internal Server Error',
-        error,
+        error
       };
     }
     return responseJSON;
@@ -185,7 +186,7 @@ const getStrike = (price: number) => {
 
 export const getSearchTerm = (
   { instrument_to_watch }: strategy_prop,
-  item: ltp_prop,
+  item: ltp_prop
 ) => {
   return (
     instrument_to_watch.name + ' ' + getStrike(Number(item.last_traded_price))
