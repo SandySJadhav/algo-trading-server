@@ -7,8 +7,7 @@
         "node_modules",
         ".git",
         "firebase-debug.log",
-        "firebase-debug.*.log",
-        "public"
+        "firebase-debug.*.log"
       ],
       "predeploy": [
         "npm --prefix \"$RESOURCE_DIR\" run lint",
@@ -16,5 +15,10 @@
       ],
       "runtime": "nodejs20"
     }
-  ]
+  ],
+  "emulators": {
+    "functions": {
+      "host": "127.0.0.1"
+    }
+  }
 }

@@ -7,7 +7,7 @@
     "build": "rimraf ./build && tsc",
     "dev": "npx nodemon",
     "start": "npm run build && node build/app.js",
-    "deploy": "firebase deploy --only functions",
+    "deploy": "firebase deploy --only functions:api",
     "lint": "eslint . --ext .ts"
   },
   "husky": {
