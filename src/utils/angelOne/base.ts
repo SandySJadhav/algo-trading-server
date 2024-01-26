@@ -621,7 +621,7 @@ class Angel {
         this.getPreviousCandleLow(matched_strategy.data);
       // we can take entry here
       console.log(
-        `🚀 LTP: ${Number(item.last_traded_price)}, >= ${
+        `🚀 Waiting for entry -> LTP: ${Number(item.last_traded_price)}, >= ${
           this.ACTIVE_STRATEGIES[matched_index].previous_candle_high +
           matched_strategy.buffer_points
         } or <= ${
@@ -671,7 +671,7 @@ class Angel {
         );
         if (order.status) {
           this.ACTIVE_STRATEGIES[matched_index].order_status = "PLACED";
-          delete this.ACTIVE_STRATEGIES[matched_index].call_instrument_to_trade;
+          delete this.ACTIVE_STRATEGIES[matched_index].put_instrument_to_trade;
         } else {
           this.ACTIVE_STRATEGIES[matched_index].order_status = "FAILED";
           this.ACTIVE_STRATEGIES[matched_index].entries_taken_today--;
@@ -717,7 +717,7 @@ class Angel {
         );
         if (order.status) {
           this.ACTIVE_STRATEGIES[matched_index].order_status = "PLACED";
-          delete this.ACTIVE_STRATEGIES[matched_index].put_instrument_to_trade;
+          delete this.ACTIVE_STRATEGIES[matched_index].call_instrument_to_trade;
         } else {
           this.ACTIVE_STRATEGIES[matched_index].order_status = "FAILED";
           this.ACTIVE_STRATEGIES[matched_index].entries_taken_today--;
