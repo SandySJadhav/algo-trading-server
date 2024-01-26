@@ -41,10 +41,7 @@ const AngelLogin = async () => {
   );
 
   if (process.env.environment !== "dev") {
-    const newDate = new Date();
-    if (newDate.getHours() > 9 && newDate.getHours() < 23) {
-      loginCroner.trigger();
-    }
+    loginCroner.trigger();
   }
 };
 

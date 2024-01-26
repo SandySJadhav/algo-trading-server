@@ -371,9 +371,6 @@ export const startCronerToSyncInstruments = () => {
     initiateDataSync();
   });
   if (process.env.environment !== "dev") {
-    const newDate = new Date();
-    if (newDate.getHours() > 9 && newDate.getHours() < 23) {
-      instrumentSyncCroner.trigger();
-    }
+    instrumentSyncCroner.trigger();
   }
 };
