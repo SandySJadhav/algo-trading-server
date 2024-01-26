@@ -6,6 +6,7 @@ config();
 import { startCronerToSyncInstruments } from './utils/firebase/base';
 import AngelLogin from './utils/angelOne/instance';
 import { onRequest } from 'firebase-functions/v2/https';
+import { logger } from 'firebase-functions/v2';
 
 const app = express();
 const PORT = process.env.PORT || '3001';
@@ -22,6 +23,7 @@ app.use(function (req, res) {
 
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on http://localhost:${PORT}`);
+  logger.info(`🚀 Server is running on http://localhost:${PORT}`);
   // start daily instrument sync job
   startCronerToSyncInstruments();
   // create angel instance and login
