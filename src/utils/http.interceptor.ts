@@ -1,4 +1,5 @@
-import fetch from "./fetch";
+import { logger } from 'firebase-functions/v2';
+import fetch from './fetch';
 
 export const postRequest = async (
   url: string,
@@ -7,11 +8,11 @@ export const postRequest = async (
 ) => {
   try {
     const response = await fetch(url, {
-      method: "POST",
+      method: 'POST',
       body: body ? JSON.stringify(body) : null,
       headers: headers ?? {
-        "Content-Type": "application/json",
-      },
+        'Content-Type': 'application/json'
+      }
     });
     if (response.ok) {
       const data = await response.json();
@@ -19,10 +20,10 @@ export const postRequest = async (
     }
     return {
       statusCode: response.status,
-      status: response.statusText,
+      status: response.statusText
     };
   } catch (error) {
-    console.log("🚀 API RESPONSE ERROR -> url ", error);
+    logger.log('🚀 API RESPONSE ERROR -> url ', error);
     return error;
   }
 };

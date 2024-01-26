@@ -1,8 +1,6 @@
 {
   "extends": [
-    "next/core-web-vitals",
     "plugin:@typescript-eslint/recommended",
-    "prettier/@typescript-eslint",
     "plugin:prettier/recommended"
   ],
   "parser": "@typescript-eslint/parser",
@@ -10,12 +8,20 @@
     "ecmaFeatures": {
       "jsx": true
     },
-    "project": "./src/tsconfig.json",
+    "project": "./tsconfig.json",
     "ecmaVersion": 2018,
     "sourceType": "module"
   },
-  "plugins": ["react", "@typescript-eslint", "jest"],
+  "plugins": ["@typescript-eslint", "jest"],
   "rules": {
-    "react/react-in-jsx-scope": "off"
+    "react/react-in-jsx-scope": "off",
+    "prettier/prettier": [
+      "error",
+      {
+        "singleQuote": true,
+        "endOfLine": "auto",
+        "trailingComma": "none"
+      }
+    ]
   }
 }

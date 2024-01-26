@@ -1,10 +1,11 @@
-import Cron from "croner";
-import Firebase from "./instance";
-import fetch from "node-fetch";
-import { Timestamp } from "firebase-admin/firestore";
-import { sanitizeText } from "../helpers";
-import { instrument_prop } from "../types";
-import { cleanAllStrategies } from "./strategies";
+import Cron from 'croner';
+import Firebase from './instance';
+import fetch from 'node-fetch';
+import { Timestamp } from 'firebase-admin/firestore';
+import { sanitizeText } from '../helpers';
+import { instrument_prop } from '../types';
+import { cleanAllStrategies } from './strategies';
+import { logger } from 'firebase-functions/v2';
 
 /*
   const NSE = [
@@ -16,7 +17,7 @@ import { cleanAllStrategies } from "./strategies";
 const supportedInstruments: any = {
   MCX: {
     OPTFUT: true, // commodity futures
-    FUTCOM: true, // commodity futures
+    FUTCOM: true // commodity futures
     // "COMDTY", // not supported
     // "FUTIDX", // not supported
     // "AMXIDX", // not supported
@@ -25,23 +26,23 @@ const supportedInstruments: any = {
     OPTSTK: true, // stock options
     OPTIDX: true, // index options
     FUTSTK: true, // stock futures
-    FUTIDX: true, // index futures
-  },
+    FUTIDX: true // index futures
+  }
 };
 
 const months = [
-  "JAN",
-  "FEB",
-  "MAR",
-  "APR",
-  "MAY",
-  "JUN",
-  "JUL",
-  "AUG",
-  "SEP",
-  "OCT",
-  "NOV",
-  "DEC",
+  'JAN',
+  'FEB',
+  'MAR',
+  'APR',
+  'MAY',
+  'JUN',
+  'JUL',
+  'AUG',
+  'SEP',
+  'OCT',
+  'NOV',
+  'DEC'
 ];
 
 /**
@@ -61,17 +62,17 @@ const formatPayload = ({
   lotsize,
   instrumenttype,
   exch_seg,
-  tick_size,
+  tick_size
 }: instrument_prop) => {
   // name_keywords are related to name
   const name_keywords: any = [];
   // rel_keywords are related to symbol
   const rel_keywords: any = [];
 
-  const expiryDate = new Date(expiry || "12DEC9999");
+  const expiryDate = new Date(expiry || '12DEC9999');
   expiryDate.setHours(23, 59, 59, 999);
 
-  if (exch_seg !== "NSE") {
+  if (exch_seg !== 'NSE') {
     // stocks don't have expiry
     const month = months[expiryDate.getMonth()]; // month = JAN
     const expDate = expiry.split(month)[0]; // expDate = 31
@@ -81,24 +82,24 @@ const formatPayload = ({
     if (!keywordExists(rel_keywords, expDate)) {
       rel_keywords.push(expDate); // 31
     }
-    if (["FUTCOM", "FUTSTK", "FUTIDX"].includes(instrumenttype)) {
-      if (!keywordExists(rel_keywords, "FUT")) {
-        rel_keywords.push("FUT");
+    if (['FUTCOM', 'FUTSTK', 'FUTIDX'].includes(instrumenttype)) {
+      if (!keywordExists(rel_keywords, 'FUT')) {
+        rel_keywords.push('FUT');
       }
-    } else if (["OPTFUT", "OPTSTK", "OPTIDX"].includes(instrumenttype)) {
+    } else if (['OPTFUT', 'OPTSTK', 'OPTIDX'].includes(instrumenttype)) {
       let wrdStr = symbol.substring(name.length);
-      const optionType = wrdStr.endsWith("CE")
-        ? "CE"
-        : wrdStr.endsWith("PE")
-        ? "PE"
-        : "";
+      const optionType = wrdStr.endsWith('CE')
+        ? 'CE'
+        : wrdStr.endsWith('PE')
+          ? 'PE'
+          : '';
       if (optionType) {
         if (!keywordExists(rel_keywords, optionType)) {
           rel_keywords.push(optionType); // CE or PE
         }
         // remove CT or PE at end
         wrdStr = wrdStr.substring(0, wrdStr.length - 2); // output -> MCX = 24FEB7000 and for NFO = 24FEB247000
-        if (instrumenttype === "OPTFUT") {
+        if (instrumenttype === 'OPTFUT') {
           // MCX option
           wrdStr = wrdStr.substring(5); // output = 7000
         } else {
@@ -109,7 +110,7 @@ const formatPayload = ({
           rel_keywords.push(wrdStr); // 7000
         }
 
-        const midVal: number = parseInt("" + wrdStr.length / 2);
+        const midVal: number = parseInt('' + wrdStr.length / 2);
         const minWordLen: number = midVal > 2 ? midVal : 3;
 
         for (let i = wrdStr.length; i >= minWordLen; i--) {
@@ -119,7 +120,7 @@ const formatPayload = ({
           }
         }
       } else {
-        console.log(
+        logger.log(
           'Something is missing with ["OPTFUT", "OPTSTK", "OPTIDX"], found option with do not ends with CE or PE',
           symbol
         );
@@ -128,10 +129,10 @@ const formatPayload = ({
   }
 
   if (
-    ["FUTCOM", "FUTSTK", "FUTIDX"].includes(instrumenttype) ||
-    exch_seg === "NSE"
+    ['FUTCOM', 'FUTSTK', 'FUTIDX'].includes(instrumenttype) ||
+    exch_seg === 'NSE'
   ) {
-    const midVal: number = parseInt("" + name.length / 2);
+    const midVal: number = parseInt('' + name.length / 2);
     const minWordLen: number = midVal > 1 ? midVal : 2;
 
     for (let i = name.length; i >= minWordLen; i--) {
@@ -157,7 +158,7 @@ const formatPayload = ({
     expiry,
     tick_size,
     name_keywords,
-    rel_keywords,
+    rel_keywords
   };
 };
 
@@ -186,9 +187,9 @@ const filterInstruments = (instruments: instrument_prop[]) => {
         return false;
       }
       return (
-        exch_seg === "NSE" &&
+        exch_seg === 'NSE' &&
         !instrumenttype &&
-        symbol.endsWith("-EQ") &&
+        symbol.endsWith('-EQ') &&
         !expiry
       );
     })
@@ -201,7 +202,7 @@ const filterInstruments = (instruments: instrument_prop[]) => {
         lotsize,
         instrumenttype,
         exch_seg,
-        tick_size,
+        tick_size
       }: instrument_prop) => {
         return formatPayload({
           token,
@@ -211,44 +212,44 @@ const filterInstruments = (instruments: instrument_prop[]) => {
           lotsize,
           instrumenttype,
           exch_seg,
-          tick_size,
+          tick_size
         });
       }
     );
 };
 
 const fetchAllInstruments = async () => {
-  let data: string = "";
-  let response: any = {};
-  console.log("Downloading all instrument data From Angel One...");
+  let data = '';
+  const response: any = {};
+  logger.log('Downloading all instrument data From Angel One...');
   await new Promise((resolve: any) => {
     fetch(
-      "https://margincalculator.angelbroking.com/OpenAPI_File/files/OpenAPIScripMaster.json"
+      'https://margincalculator.angelbroking.com/OpenAPI_File/files/OpenAPIScripMaster.json'
     )
       .then((response) => response.body)
       .then((res) =>
         res
-          .on("readable", () => {
+          .on('readable', () => {
             let chunk;
             while (null !== (chunk = res.read())) {
               data += chunk.toString();
             }
           })
-          .on("end", () => {
+          .on('end', () => {
             if (!response.hasError) {
-              console.log("Downloaded all instrument data From Angel One");
+              logger.log('Downloaded all instrument data From Angel One');
               response.instruments = JSON.parse(data);
-              resolve("SUCCESS");
+              resolve('SUCCESS');
             }
           })
       )
       .catch((err) => {
         response.hasError = true;
-        console.log(
-          "Downloaded all instruments from Angel One failed ********",
+        logger.log(
+          'Downloaded all instruments from Angel One failed ********',
           err
         );
-        resolve("FAILED");
+        resolve('FAILED');
       });
   });
   return response;
@@ -289,7 +290,7 @@ const processInstruments = async (
     }
   }
   await Promise.all(allRecords);
-  console.log(
+  logger.log(
     isDelete
       ? `Deleted ${instruments.length} records from Firestore 🏄`
       : `Pushed all records to Firestore in ${allRecords.length} batches 🏄`
@@ -297,7 +298,7 @@ const processInstruments = async (
 };
 
 const initiateDataSync = async () => {
-  const collection = await Firebase.db.collection("instruments");
+  const collection = await Firebase.db.collection('instruments');
   // delete existing data from firestore if already expired
   const deleteInstrumentList: any[] = [];
 
@@ -306,19 +307,19 @@ const initiateDataSync = async () => {
     dtStart.setHours(0, 0, 0, 0);
     // find contracts expired at 12AM midnight
     const docs = await collection
-      .where("expiry_timestamp", "<", Timestamp.fromDate(dtStart))
+      .where('expiry_timestamp', '<', Timestamp.fromDate(dtStart))
       .get();
     // all these documents are going to be delete because they are expired
     docs.forEach((doc: any) => {
       deleteInstrumentList.push(doc.ref);
     });
   } catch (error) {
-    console.log(JSON.parse(JSON.stringify(error)));
+    logger.log(JSON.parse(JSON.stringify(error)));
     return;
   }
   if (deleteInstrumentList.length > 0) {
     // proceed to delete instruments from database;
-    console.log(`🚀 Found expired ${deleteInstrumentList.length} instruments`);
+    logger.log(`🚀 Found expired ${deleteInstrumentList.length} instruments`);
     await processInstruments(deleteInstrumentList, collection, true);
 
     // fetch all instruments from Angel one free json file
@@ -331,13 +332,13 @@ const initiateDataSync = async () => {
     // now create new payload to upload new data
     const selectedInstruments = filterInstruments(instruments);
     if (selectedInstruments?.length > 0) {
-      console.log("🚀 Record Count: ", selectedInstruments.length);
+      logger.log('🚀 Record Count: ', selectedInstruments.length);
       await processInstruments(selectedInstruments, collection, false);
     } else {
-      console.log("🚀 Everything up to date 🏄 ", new Date().toString());
+      logger.log('🚀 Everything up to date 🏄 ', new Date().toString());
     }
   } else {
-    console.log("🚀 Everything up to date 🏄 ", new Date().toString());
+    logger.log('🚀 Everything up to date 🏄 ', new Date().toString());
   }
 };
 
@@ -356,21 +357,21 @@ export const startCronerToSyncInstruments = () => {
    * * * * * * *
    */
   let maxRuns;
-  let scheduledTimer: string = "0 0 5 * * 1-5"; // At 05:00 on every day-of-week from Monday through Friday.
+  let scheduledTimer = '0 0 5 * * 1-5'; // At 05:00 on every day-of-week from Monday through Friday.
   // for dev mode, run cron job im
-  if (process.env.environment === "dev") {
+  if (process.env.ENVIRONMENT === 'dev') {
     maxRuns = 1;
-    scheduledTimer = "* * * * * *";
+    scheduledTimer = '* * * * * *';
   }
   const instrumentSyncCroner = Cron(scheduledTimer, { maxRuns }, async () => {
-    console.log(
-      "🚀 Starting data sync with Angel and 🔥 store ",
+    logger.log(
+      '🚀 Starting data sync with Angel and 🔥 store ',
       new Date().toString()
     );
     cleanAllStrategies();
     initiateDataSync();
   });
-  if (process.env.environment !== "dev") {
+  if (process.env.ENVIRONMENT !== 'dev') {
     instrumentSyncCroner.trigger();
   }
 };

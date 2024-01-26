@@ -1,24 +1,24 @@
-import { Filter } from "firebase-admin/firestore";
-import Firebase from "./instance";
-import { instrument_prop, ltp_prop, strategy_prop } from "../types";
+import Firebase from './instance';
+import { instrument_prop, ltp_prop, strategy_prop } from '../types';
+import { logger } from 'firebase-functions/v2';
 
 type SearchProps = {
   searchTerm: string;
 };
 
 const months: string[] = [
-  "JAN",
-  "FEB",
-  "MAR",
-  "APR",
-  "MAY",
-  "JUN",
-  "JUL",
-  "AUG",
-  "SEP",
-  "OCT",
-  "NOV",
-  "DEC",
+  'JAN',
+  'FEB',
+  'MAR',
+  'APR',
+  'MAY',
+  'JUN',
+  'JUL',
+  'AUG',
+  'SEP',
+  'OCT',
+  'NOV',
+  'DEC'
 ];
 
 const getFilteredResults = (results: instrument_prop[], query: string[]) => {
@@ -42,7 +42,7 @@ const getFilteredResults = (results: instrument_prop[], query: string[]) => {
   results.sort(function (a: instrument_prop, b: instrument_prop) {
     if (a.matches > b.matches) {
       return -1;
-    } else if (a.matches < b.matches || a.symbol.endsWith("FUT")) {
+    } else if (a.matches < b.matches || a.symbol.endsWith('FUT')) {
       return 1;
     }
     return 0;
@@ -55,36 +55,36 @@ export const searchInFirestore = async (params: SearchProps) => {
   try {
     const { searchTerm } = params;
     const keywords = searchTerm.toUpperCase().trim();
-    const allKeywords = keywords.split(" ");
-    const instruments_collection = Firebase.db.collection("instruments");
+    const allKeywords = keywords.split(' ');
+    const instruments_collection = Firebase.db.collection('instruments');
     let response;
 
     if (allKeywords.length > 1) {
       const allKeywordsWithoutName = keywords
         .substring(allKeywords[0].length + 1)
-        .split(" ");
+        .split(' ');
       response = await instruments_collection
-        .where("rel_keywords", "array-contains-any", allKeywordsWithoutName)
-        .orderBy("name")
+        .where('rel_keywords', 'array-contains-any', allKeywordsWithoutName)
+        .orderBy('name')
         .startAt(allKeywords[0])
-        .endAt(allKeywords[0] + "\uf8ff")
+        .endAt(allKeywords[0] + '\uf8ff')
         .limit(10)
         .get();
     } else {
       response = await instruments_collection
-        .where("name_keywords", "array-contains-any", allKeywords)
-        .orderBy("name")
+        .where('name_keywords', 'array-contains-any', allKeywords)
+        .orderBy('name')
         .startAt(allKeywords[0])
-        .endAt(allKeywords[0] + "\uf8ff")
+        .endAt(allKeywords[0] + '\uf8ff')
         .limit(5)
         .get();
     }
 
     if (response.empty) {
       return {
-        status: "SUCCESS",
+        status: 'SUCCESS',
         statusCode: 200,
-        data: [],
+        data: []
       };
     }
 
@@ -92,7 +92,7 @@ export const searchInFirestore = async (params: SearchProps) => {
     response.forEach((res: any) => {
       const resData: instrument_prop = res.data();
       const { symbol, exch_seg, name, instrumenttype, expiry } = resData;
-      if (exch_seg !== "NSE") {
+      if (exch_seg !== 'NSE') {
         const expiryDate = new Date(expiry);
         expiryDate.setHours(23, 59, 59, 999);
         let newSymbol: string = name;
@@ -102,27 +102,27 @@ export const searchInFirestore = async (params: SearchProps) => {
         const expDate = expiry.split(month)[0]; // expDate = 31
 
         newSymbol +=
-          " " + expDate + " " + month + " " + expiryDate.getFullYear();
+          ' ' + expDate + ' ' + month + ' ' + expiryDate.getFullYear();
 
-        if (["FUTCOM", "FUTSTK", "FUTIDX"].includes(instrumenttype)) {
-          newSymbol += " FUT";
-        } else if (["OPTFUT", "OPTSTK", "OPTIDX"].includes(instrumenttype)) {
+        if (['FUTCOM', 'FUTSTK', 'FUTIDX'].includes(instrumenttype)) {
+          newSymbol += ' FUT';
+        } else if (['OPTFUT', 'OPTSTK', 'OPTIDX'].includes(instrumenttype)) {
           let wrdStr = symbol.substring(name.length);
-          const optionType: string = wrdStr.endsWith("CE") ? "CE" : "PE";
+          const optionType: string = wrdStr.endsWith('CE') ? 'CE' : 'PE';
           wrdStr = wrdStr.substring(0, wrdStr.length - 2);
-          if (instrumenttype === "OPTFUT") {
+          if (instrumenttype === 'OPTFUT') {
             // MCX option
             wrdStr = wrdStr.substring(5); // output = 7000
           } else {
             // NFO option
             wrdStr = wrdStr.substring(7); // output = 7000
           }
-          newSymbol += " " + wrdStr + " " + optionType;
+          newSymbol += ' ' + wrdStr + ' ' + optionType;
         }
 
         results.push({
           ...resData,
-          displayName: newSymbol,
+          displayName: newSymbol
         });
       } else {
         results.push(resData);
@@ -132,37 +132,37 @@ export const searchInFirestore = async (params: SearchProps) => {
     const data: instrument_prop[] = getFilteredResults(results, allKeywords);
 
     return {
-      status: "SUCCESS",
+      status: 'SUCCESS',
       statusCode: 200,
-      data,
+      data
     };
   } catch (error) {
-    console.log(error);
+    logger.log(error);
     let responseJSON;
     try {
       const jsonRes = JSON.parse(JSON.stringify(error));
       if (jsonRes.code === 8) {
         // daily quota exceeded in firestore;
         responseJSON = {
-          status: "ERROR",
+          status: 'ERROR',
           statusCode: 503,
-          message: "Service Unavailable",
-          error: jsonRes,
+          message: 'Service Unavailable',
+          error: jsonRes
         };
       } else {
         responseJSON = {
-          status: "ERROR",
+          status: 'ERROR',
           statusCode: 500,
-          message: "Internal Server Error",
-          error: jsonRes,
+          message: 'Internal Server Error',
+          error: jsonRes
         };
       }
     } catch (err) {
       responseJSON = {
-        status: "ERROR",
+        status: 'ERROR',
         statusCode: 500,
-        message: "Internal Server Error",
-        error,
+        message: 'Internal Server Error',
+        error
       };
     }
     return responseJSON;
@@ -189,6 +189,6 @@ export const getSearchTerm = (
   item: ltp_prop
 ) => {
   return (
-    instrument_to_watch.name + " " + getStrike(Number(item.last_traded_price))
+    instrument_to_watch.name + ' ' + getStrike(Number(item.last_traded_price))
   );
 };
