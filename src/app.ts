@@ -11,7 +11,7 @@ import { logger, setGlobalOptions } from 'firebase-functions/v2';
 setGlobalOptions({
   maxInstances: 10,
   region: 'asia-east2',
-  timeoutSeconds: 10,
+  timeoutSeconds: 3,
 });
 
 const app = express();
