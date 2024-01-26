@@ -20,5 +20,13 @@
     "functions": {
       "host": "127.0.0.1"
     }
+  },
+  "hosting": {
+    "public": "public",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ]
   }
 }
