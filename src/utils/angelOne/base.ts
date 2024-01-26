@@ -449,33 +449,22 @@ class Angel {
     } = matched_strategy;
 
     if (order_status !== "IDLE") {
-      switch (order_status) {
-        case "STRIKE_SELECTION":
-          console.log(
-            `🚀 Strike selection in progress for strategy ${id} `,
-            new Date().toString()
-          );
-          return;
-        case "PLACED":
-          // placed order, waiting for exit trigger
-          this.handleExitStrategy(item, matched_index);
-          return;
-        case "PENDING":
-          // placing order, waiting for exit trigger
-          console.log(
-            `🚀 Order placement in progress for strategy ${id} `,
-            new Date().toString()
-          );
-          return;
-        case "FAILED":
-          console.log(`🚀 Order exit failed ${id} `, new Date().toString());
-          return;
-        default:
-          console.log(
-            `🚀 Strategy: ${id}, Operations in progress -> ${order_status} `,
-            new Date().toString()
-          );
-          return;
+      if (order_status === "PLACED") {
+        // placed order, waiting for exit trigger
+        this.handleExitStrategy(item, matched_index);
+        return;
+      } else if (order_status === "FAILED") {
+        console.log(
+          `🚀 Orders failed for strategy ${id} `,
+          new Date().toString()
+        );
+        return;
+      } else {
+        console.log(
+          `🚀 Strategy: ${id}, Operations in progress -> ${order_status} `,
+          new Date().toString()
+        );
+        return;
       }
     } else if (!call_instrument_to_trade || !put_instrument_to_trade) {
       console.log(
