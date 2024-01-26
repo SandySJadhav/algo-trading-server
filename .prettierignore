@@ -1,5 +1,8 @@
 .yarn
 .next
 dist
+build
 node_modules
 docs
+
+**/*.svg

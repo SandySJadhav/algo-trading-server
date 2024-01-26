@@ -1,6 +1,6 @@
 export const CONSTANTS = {
-  websocketURL: "wss://smartapisocket.angelone.in/smart-stream",
-  wsclientupdatesURL: "wss://tns.angelone.in/smart-order-update",
+  websocketURL: 'wss://smartapisocket.angelone.in/smart-stream',
+  wsclientupdatesURL: 'wss://tns.angelone.in/smart-order-update',
   Interval: 10000,
 };
 
@@ -24,5 +24,5 @@ export const EXCHANGES = {
 };
 
 export const EXCHANGE_TYPE = {
-  "5": "MCX",
+  '5': 'MCX',
 };

@@ -1,16 +1,16 @@
-import fetch from "./fetch";
+import fetch from './fetch';
 
 export const postRequest = async (
   url: string,
   body?: object,
-  headers?: object
+  headers?: object,
 ) => {
   try {
     const response = await fetch(url, {
-      method: "POST",
+      method: 'POST',
       body: body ? JSON.stringify(body) : null,
       headers: headers ?? {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
     });
     if (response.ok) {
@@ -22,7 +22,7 @@ export const postRequest = async (
       status: response.statusText,
     };
   } catch (error) {
-    console.log("🚀 API RESPONSE ERROR -> url ", error);
+    console.log('🚀 API RESPONSE ERROR -> url ', error);
     return error;
   }
 };

@@ -4,7 +4,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 
 // Initialize Firebase
 const firebaseApp = initializeApp({
-    credential: cert("algo-to-the-future-key.json"),
+  credential: cert('algo-to-the-future-key.json'),
 });
 // Initialize auth & provider
 

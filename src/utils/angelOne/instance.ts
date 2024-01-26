@@ -1,5 +1,5 @@
-import Cron from "croner";
-import Angel from "./base";
+import Cron from 'croner';
+import Angel from './base';
 
 let angelInstance: Angel | null;
 
@@ -17,11 +17,11 @@ const AngelLogin = async () => {
    * │ │ │ │ │ │
    * * * * * * *
    */
-  let loginSchedulerTimer = "0 9 * * 1-5"; // Runs at 09:00 on every day-of-week from Monday-Friday.
+  let loginSchedulerTimer = '0 9 * * 1-5'; // Runs at 09:00 on every day-of-week from Monday-Friday.
   let loginMaxRuns;
-  if (process.env.environment === "dev") {
+  if (process.env.ENVIRONMENT === 'dev') {
     loginMaxRuns = 1;
-    loginSchedulerTimer = "* * * * * *";
+    loginSchedulerTimer = '* * * * * *';
   }
   const loginCroner = Cron(
     loginSchedulerTimer,
@@ -29,18 +29,18 @@ const AngelLogin = async () => {
     async () => {
       if (angelInstance?.JWTTOKEN) {
         console.log(
-          "🚀 Running previous Angel instance cleanups ",
-          new Date().toString()
+          '🚀 Running previous Angel instance cleanups ',
+          new Date().toString(),
         );
         angelInstance.cleanup();
         angelInstance = null;
       }
-      console.log("🚀 Angel Login Croner executed ", new Date().toString());
+      console.log('🚀 Angel Login Croner executed ', new Date().toString());
       angelInstance = new Angel();
-    }
+    },
   );
 
-  if (process.env.environment !== "dev") {
+  if (process.env.ENVIRONMENT !== 'dev') {
     loginCroner.trigger();
   }
 };

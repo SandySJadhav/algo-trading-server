@@ -1,14 +1,14 @@
-import { updateOrderStatus } from "../firebase/strategies";
-import { postRequest } from "../http.interceptor";
-import { strategy_prop } from "../types";
-import API from "./api";
+import { updateOrderStatus } from '../firebase/strategies';
+import { postRequest } from '../http.interceptor';
+import { strategy_prop } from '../types';
+import API from './api';
 
 type Order = {
-  variety: "NORMAL"; // | "STOPLOSS" | "AMO" | "ROBO";
-  transactiontype: "BUY" | "SELL";
-  ordertype: "MARKET"; // | "LIMIT" | "STOPLOSS_LIMIT" | "STOPLOSS_MARKET";
-  producttype: "CARRYFORWARD"; // "DELIVERY" | "CARRYFORWARD" | "MARGIN" | "INTRADAY" | "BO";
-  duration: "DAY"; // | "IOC";
+  variety: 'NORMAL'; // | "STOPLOSS" | "AMO" | "ROBO";
+  transactiontype: 'BUY' | 'SELL';
+  ordertype: 'MARKET'; // | "LIMIT" | "STOPLOSS_LIMIT" | "STOPLOSS_MARKET";
+  producttype: 'CARRYFORWARD'; // "DELIVERY" | "CARRYFORWARD" | "MARGIN" | "INTRADAY" | "BO";
+  duration: 'DAY'; // | "IOC";
   exchange: string; //"BSE" | "NFO" | "NSE" | "BFO" | "CDS";
   tradingsymbol: string;
   symboltoken: string;
@@ -32,12 +32,12 @@ type OrderResponse = {
 export const placeOrder = async (
   params: Order,
   headers: any,
-  matched_strategy: strategy_prop
+  matched_strategy: strategy_prop,
 ) => {
   const response: OrderResponse = await postRequest(
     API.root + API.order_place,
     params,
-    headers
+    headers,
   );
   console.log(response);
   let data: any = {
