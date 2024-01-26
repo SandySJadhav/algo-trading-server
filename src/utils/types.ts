@@ -46,6 +46,8 @@ export interface strategy_prop {
   entry_price: number;
   exit_price: number;
   profit_points: number;
+  previous_candle_low: number;
+  previous_candle_high: number;
 }
 
 export interface ltp_prop {
