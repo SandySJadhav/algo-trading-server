@@ -1,6 +1,5 @@
 import Firebase from './instance';
 import { instrument_prop, ltp_prop, strategy_prop } from '../types';
-import { logger } from 'firebase-functions/v2';
 
 type SearchProps = {
   searchTerm: string;
@@ -137,7 +136,7 @@ export const searchInFirestore = async (params: SearchProps) => {
       data
     };
   } catch (error) {
-    logger.log(error);
+    console.log(error);
     let responseJSON;
     try {
       const jsonRes = JSON.parse(JSON.stringify(error));

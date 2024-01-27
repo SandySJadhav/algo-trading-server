@@ -1,4 +1,3 @@
-import { logger } from 'firebase-functions/v2';
 import { instrument_prop, strategy_prop } from '../types';
 import Firebase from './instance';
 
@@ -27,7 +26,7 @@ export const cleanAllStrategies = async () => {
   const strategies_colllection = Firebase.db.collection('strategies');
   const response = await strategies_colllection.get();
   if (response.empty) {
-    logger.log('🚀 Nothing to reset in 🔥 store ', new Date().toString());
+    console.log('🚀 Nothing to reset in 🔥 store ', new Date().toString());
     return [];
   }
   const batch = Firebase.db.batch();
@@ -42,12 +41,12 @@ export const cleanAllStrategies = async () => {
       profit_points: 0
     });
   });
-  logger.log('🚀 Reset strategies done in 🔥 store ', new Date().toString());
+  console.log('🚀 Reset strategies done in 🔥 store ', new Date().toString());
   return batch.commit();
 };
 
 export const fetchAllActiveStrategies = async () => {
-  logger.log(
+  console.log(
     '🚀 Fetching all active strategies from 🔥 store ',
     new Date().toString()
   );
@@ -57,7 +56,7 @@ export const fetchAllActiveStrategies = async () => {
     .get();
 
   if (response.empty) {
-    logger.log(
+    console.log(
       '🚀 No any active strategies found in 🔥 store',
       new Date().toString()
     );
@@ -110,7 +109,7 @@ export const fetchAllActiveStrategies = async () => {
       }
     });
 
-    logger.log(
+    console.log(
       `🚀 Total ${result.length} active strategies found in 🔥 store`,
       new Date().toString()
     );

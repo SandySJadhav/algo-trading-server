@@ -1,4 +1,3 @@
-import { logger } from 'firebase-functions/v2';
 import { updateOrderStatus } from '../firebase/strategies';
 import { postRequest } from '../http.interceptor';
 import { strategy_prop } from '../types';
@@ -40,7 +39,7 @@ export const placeOrder = async (
     params,
     headers
   );
-  logger.log(response);
+  console.log(response);
   let data: any = {
     ...params,
     strategy_id: matched_strategy.id

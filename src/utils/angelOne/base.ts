@@ -11,7 +11,6 @@ import { _atos, toNumber } from '../helpers';
 import generateTOTP from '../totp/base';
 import { placeOrder } from './order';
 import { getSearchTerm, searchInFirestore } from '../firebase/search';
-import { logger } from 'firebase-functions/v2';
 
 const formatNumberInTime = (num: number): string => {
   return num > 9 ? num.toString() : '0' + num;
@@ -61,7 +60,7 @@ class Angel {
 
     address((err, addrs) => {
       if (err) {
-        logger.log('🔥 Failed to get address...', err);
+        console.log('🔥 Failed to get address...', err);
       }
       this.headers['X-ClientLocalIP'] =
         addrs !== undefined ? addrs.ip + '' : '192.168.168.168';
@@ -97,7 +96,7 @@ class Angel {
       'X-ClientPublicIP': '',
       Authorization: ''
     };
-    logger.log('🚀 Cleanup done ', new Date().toString());
+    console.log('🚀 Cleanup done ', new Date().toString());
   }
 
   /**
@@ -118,13 +117,13 @@ class Angel {
       }
     });
     if (this.ACTIVE_STRATEGIES.length === 0) {
-      logger.log('🚀 No any active strategies found 🏄!');
+      console.log('🚀 No any active strategies found 🏄!');
       return;
     }
     // fetch candle history for above strategies
     const activeCandles = await this.getAllInstrumentCandleHistory();
     if (!activeCandles) {
-      logger.log('🚀 All markets are closed now 🏄!');
+      console.log('🚀 All markets are closed now 🏄!');
       return;
     }
     // initiate new live feed
@@ -132,7 +131,7 @@ class Angel {
   }
 
   async initiateLiveFeed() {
-    logger.log('🚀 Initiate live feed ', new Date().toString());
+    console.log('🚀 Initiate live feed ', new Date().toString());
     // TODO - supported only mcx instruments for now
     const allMCXInstruments: string[] = [];
 
@@ -223,7 +222,7 @@ class Angel {
       } else if (item.errorcode === 'AB1004') {
         this.ACTIVE_STRATEGIES[i].market_status = 'CLOSED';
       } else {
-        logger.log(
+        console.log(
           '🔥 Failed to fetch candlestick data ',
           new Date().toString(),
           item
@@ -236,7 +235,7 @@ class Angel {
   }
 
   async login() {
-    logger.log('🚀 Angel Login in progress ', new Date().toString());
+    console.log('🚀 Angel Login in progress ', new Date().toString());
     const response = await postRequest(
       API.root + API.user_login,
       {
@@ -251,32 +250,32 @@ class Angel {
       this.JWTTOKEN = response.data.jwtToken;
       this.FEEDTOKEN = response.data.feedToken;
       this.headers.Authorization = `Bearer ${this.JWTTOKEN}`;
-      logger.log('🚀 Angel Login Success 🥳 ', new Date().toString());
+      console.log('🚀 Angel Login Success 🥳 ', new Date().toString());
       this.initiateStrategyLoaderCroner();
     } else {
       this.REFRESHTOKEN = '';
       this.JWTTOKEN = '';
       this.FEEDTOKEN = '';
       this.headers.Authorization = '';
-      logger.log(
+      console.log(
         '🔥 Angel Login failed message: ',
         response.message,
         new Date().toString()
       );
       setTimeout(() => {
         if (this.LOGIN_RETRY) {
-          logger.log('🚀 Retry login ', new Date().toString());
+          console.log('🚀 Retry login ', new Date().toString());
           this.login();
           this.LOGIN_RETRY--;
         } else {
-          logger.log('🔥 Login retry limit reached. ', new Date().toString());
+          console.log('🔥 Login retry limit reached. ', new Date().toString());
         }
       }, 5000);
     }
   }
 
   initiateStrategyLoaderCroner() {
-    logger.log(
+    console.log(
       '🚀 Initializing strategy loader croner ',
       new Date().toString()
     );
@@ -291,7 +290,7 @@ class Angel {
       strategyScheduledTimer,
       { maxRuns: strategyCronerMaxRuns },
       async () => {
-        logger.log(
+        console.log(
           '🚀 Strategy loader 15 minute croner execution Success 🥳 ',
           new Date().toString()
         );
@@ -325,7 +324,7 @@ class Angel {
         this.HEARTBEAT_CRON = null;
       }
       this.WS = null;
-      logger.log('🔥 Websocket connection closed!');
+      console.log('🔥 Websocket connection closed!');
     });
 
     this.WS.on('error', (err: any) => {
@@ -334,7 +333,7 @@ class Angel {
         this.HEARTBEAT_CRON = null;
       }
       this.WS = null;
-      logger.log('🔥 Websocket connection error ', err);
+      console.log('🔥 Websocket connection error ', err);
     });
 
     this.WS.on('open', () => {
@@ -347,7 +346,7 @@ class Angel {
         });
         this.WS_WATCH_LIST_PAYLOADS = [];
       }
-      logger.log('🚀 Websockets is ❤️ ', new Date().toString());
+      console.log('🚀 Websockets is ❤️ ', new Date().toString());
     });
 
     this.WS.on('message', async (data: any) => {
@@ -370,7 +369,7 @@ class Angel {
           }
         });
       } else if (data.toString() !== 'pong') {
-        logger.log(
+        console.log(
           '🔥 Untracked message -> ',
           data.toString(),
           new Date().toString()
@@ -421,14 +420,14 @@ class Angel {
         this.ACTIVE_STRATEGIES[matched_index].call_instrument_to_trade &&
         this.ACTIVE_STRATEGIES[matched_index].put_instrument_to_trade
       ) {
-        logger.log(
+        console.log(
           '🚀 Matching call & put instruments found ',
           new Date().toString()
         );
         this.ACTIVE_STRATEGIES[matched_index].order_status = 'IDLE';
       }
     } else {
-      logger.log(
+      console.log(
         `🔥 Strike price selection API failed for ${searchTerm}`,
         response,
         new Date().toString()
@@ -455,20 +454,20 @@ class Angel {
         this.handleExitStrategy(item, matched_index);
         return;
       } else if (order_status === 'FAILED') {
-        logger.log(
+        console.log(
           `🚀 Orders failed for strategy ${id} `,
           new Date().toString()
         );
         return;
       } else {
-        logger.log(
+        console.log(
           `🚀 Strategy: ${id}, Operations in progress -> ${order_status} `,
           new Date().toString()
         );
         return;
       }
     } else if (!call_instrument_to_trade || !put_instrument_to_trade) {
-      logger.log(
+      console.log(
         '🚀 Searching for call & put instruments ',
         new Date().toString()
       );
@@ -485,7 +484,7 @@ class Angel {
       ) {
         this.handleCrossing(item, matched_index);
       } else {
-        logger.log(
+        console.log(
           '🔥 Handle for this type of execution is not written!!! ',
           new Date().toString()
         );
@@ -530,7 +529,7 @@ class Angel {
         this.ACTIVE_STRATEGIES[matched_index].entry_price =
           matched_strategy.entry_price - matched_strategy.trailing_sl_points;
       }
-      logger.log(
+      console.log(
         `🚀 Trailing sl for ${matched_strategy.id}`,
         new Date().toString()
       );
@@ -552,7 +551,7 @@ class Angel {
         item.last_traded_price
       );
       // check stoploss
-      logger.log(`🚀 SL hit for ${matched_strategy.id}`, new Date().toString());
+      console.log(`🚀 SL hit for ${matched_strategy.id}`, new Date().toString());
 
       if (tradeOptionType === 'CE') {
         this.ACTIVE_STRATEGIES[matched_index].profit_points =
@@ -607,7 +606,7 @@ class Angel {
       this.ACTIVE_STRATEGIES[matched_index].previous_candle_low =
         this.getPreviousCandleLow(matched_strategy.data);
       // we can take entry here
-      logger.log(
+      console.log(
         `🚀 Waiting for entry -> LTP: ${Number(item.last_traded_price)}, >= ${
           this.ACTIVE_STRATEGIES[matched_index].previous_candle_high +
           matched_strategy.buffer_points
@@ -629,7 +628,7 @@ class Angel {
         this.ACTIVE_STRATEGIES[matched_index].entry_price = Number(
           item.last_traded_price
         );
-        logger.log(
+        console.log(
           `🚀 CE Order placement criteria met for strategy ${this.ACTIVE_STRATEGIES[matched_index].id}`,
           new Date().toString()
         );
@@ -675,7 +674,7 @@ class Angel {
         this.ACTIVE_STRATEGIES[matched_index].entry_price = Number(
           item.last_traded_price
         );
-        logger.log(
+        console.log(
           `🚀 PE Order placement criteria met for strategy ${this.ACTIVE_STRATEGIES[matched_index].id}`,
           new Date().toString()
         );

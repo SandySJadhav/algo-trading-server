@@ -1,4 +1,3 @@
-import { logger } from 'firebase-functions/v2';
 import fetch from './fetch';
 
 export const postRequest = async (
@@ -23,7 +22,7 @@ export const postRequest = async (
       status: response.statusText
     };
   } catch (error) {
-    logger.log('🚀 API RESPONSE ERROR -> url ', error);
+    console.log('🚀 API RESPONSE ERROR -> url ', error);
     return error;
   }
 };

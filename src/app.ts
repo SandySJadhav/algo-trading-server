@@ -5,14 +5,12 @@ import searchRouter from './routes/search';
 config();
 import { startCronerToSyncInstruments } from './utils/firebase/base';
 import AngelLogin from './utils/angelOne/instance';
-import { onRequest } from 'firebase-functions/v2/https';
-import { logger, setGlobalOptions } from 'firebase-functions/v2';
 
-setGlobalOptions({
-  maxInstances: 10,
-  region: 'asia-east2',
-  timeoutSeconds: 5
-});
+// setGlobalOptions({
+//   maxInstances: 10,
+//   region: 'asia-south1,
+//   timeoutSeconds: 5
+// });
 
 const app = express();
 
@@ -29,12 +27,12 @@ app.use(function (req, res) {
   });
 });
 
-app.listen('3001', () => {
-  logger.info(`🚀 Server is running on http://localhost:3001`);
+const PORT = process.env.PORT || '3001';
+
+app.listen(PORT, () => {
+  console.info(`🚀 Server is running on http://localhost:${PORT}`);
   // start daily instrument sync job
   startCronerToSyncInstruments();
   // create angel instance and login
   AngelLogin();
 });
-
-exports.api = onRequest(app);
