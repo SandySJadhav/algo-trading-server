@@ -21,14 +21,14 @@ jobs:
         with:
           node-version: '20.x'
 
-      - name: npm install, build, and test
+      - name: npm install and build
         run: |
           npm install
           npm run build
 
       - name: copy
         run: |
-          touch build/package.json
+          touch "${{ github.action_path }}/build/package.json"
           cat "${{ github.action_path }}/package.json" > "${{ github.action_path }}/build/package.json"
 
       - name: Zip artifact for deployment
