@@ -58,5 +58,5 @@ jobs:
         with:
           app-name: 'algo-to-the-future'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_71403FBD4FFA4791814AEB6B1B44B702 }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_33E8A02E901C4B5A814423C80862F701 }}
           package: .
