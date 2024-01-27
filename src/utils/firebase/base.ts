@@ -5,7 +5,6 @@ import { Timestamp } from 'firebase-admin/firestore';
 import { sanitizeText } from '../helpers';
 import { instrument_prop } from '../types';
 import { cleanAllStrategies } from './strategies';
-import { logger } from 'firebase-functions/v2';
 
 /*
   const NSE = [
@@ -120,7 +119,7 @@ const formatPayload = ({
           }
         }
       } else {
-        logger.log(
+        console.log(
           'Something is missing with ["OPTFUT", "OPTSTK", "OPTIDX"], found option with do not ends with CE or PE',
           symbol
         );
@@ -221,13 +220,13 @@ const filterInstruments = (instruments: instrument_prop[]) => {
 const fetchAllInstruments = async () => {
   let data = '';
   const response: any = {};
-  logger.log('Downloading all instrument data From Angel One...');
+  console.log('Downloading all instrument data From Angel One...');
   await new Promise((resolve: any) => {
     fetch(
       'https://margincalculator.angelbroking.com/OpenAPI_File/files/OpenAPIScripMaster.json'
     )
-      .then((response) => response.body)
-      .then((res) =>
+      .then((response: any) => response.body)
+      .then((res: any) =>
         res
           .on('readable', () => {
             let chunk;
@@ -237,15 +236,15 @@ const fetchAllInstruments = async () => {
           })
           .on('end', () => {
             if (!response.hasError) {
-              logger.log('Downloaded all instrument data From Angel One');
+              console.log('Downloaded all instrument data From Angel One');
               response.instruments = JSON.parse(data);
               resolve('SUCCESS');
             }
           })
       )
-      .catch((err) => {
+      .catch((err: any) => {
         response.hasError = true;
-        logger.log(
+        console.log(
           'Downloaded all instruments from Angel One failed ********',
           err
         );
@@ -290,7 +289,7 @@ const processInstruments = async (
     }
   }
   await Promise.all(allRecords);
-  logger.log(
+  console.log(
     isDelete
       ? `Deleted ${instruments.length} records from Firestore 🏄`
       : `Pushed all records to Firestore in ${allRecords.length} batches 🏄`
@@ -314,12 +313,12 @@ const initiateDataSync = async () => {
       deleteInstrumentList.push(doc.ref);
     });
   } catch (error) {
-    logger.log(JSON.parse(JSON.stringify(error)));
+    console.log(JSON.parse(JSON.stringify(error)));
     return;
   }
   if (deleteInstrumentList.length > 0) {
     // proceed to delete instruments from database;
-    logger.log(`🚀 Found expired ${deleteInstrumentList.length} instruments`);
+    console.log(`🚀 Found expired ${deleteInstrumentList.length} instruments`);
     await processInstruments(deleteInstrumentList, collection, true);
 
     // fetch all instruments from Angel one free json file
@@ -332,13 +331,13 @@ const initiateDataSync = async () => {
     // now create new payload to upload new data
     const selectedInstruments = filterInstruments(instruments);
     if (selectedInstruments?.length > 0) {
-      logger.log('🚀 Record Count: ', selectedInstruments.length);
+      console.log('🚀 Record Count: ', selectedInstruments.length);
       await processInstruments(selectedInstruments, collection, false);
     } else {
-      logger.log('🚀 Everything up to date 🏄 ', new Date().toString());
+      console.log('🚀 Everything up to date 🏄 ', new Date().toString());
     }
   } else {
-    logger.log('🚀 Everything up to date 🏄 ', new Date().toString());
+    console.log('🚀 Everything up to date 🏄 ', new Date().toString());
   }
 };
 
@@ -364,7 +363,7 @@ export const startCronerToSyncInstruments = () => {
     scheduledTimer = '* * * * * *';
   }
   const instrumentSyncCroner = Cron(scheduledTimer, { maxRuns }, async () => {
-    logger.log(
+    console.log(
       '🚀 Starting data sync with Angel and 🔥 store ',
       new Date().toString()
     );
