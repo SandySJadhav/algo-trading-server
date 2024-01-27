@@ -26,7 +26,8 @@ jobs:
           npm install
           npm run build
 
-      - task: CopyFiles@2
+      - name: "copy package.json"
+        uses: CopyFiles@2
         inputs:
           Contents: './package.json'
           TargetFolder: "./build/"
