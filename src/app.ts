@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { config } from 'dotenv';
 import searchRouter from './routes/search';
+import heartBeatRouter from './routes/index';
 config();
 import { startCronerToSyncInstruments } from './utils/firebase/base';
 import AngelLogin from './utils/angelOne/instance';
@@ -17,6 +18,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.use('/', heartBeatRouter);
 app.use('/search', searchRouter);
 
 // catch 404
