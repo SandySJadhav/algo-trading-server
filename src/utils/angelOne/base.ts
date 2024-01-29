@@ -421,7 +421,11 @@ class Angel {
         this.ACTIVE_STRATEGIES[matched_index].put_instrument_to_trade
       ) {
         console.log(
-          '🚀 Matching call & put instruments found ',
+          `🚀 Call instrument matched -> ${this.ACTIVE_STRATEGIES[matched_index].call_instrument_to_trade?.displayName}`,
+          new Date().toString()
+        );
+        console.log(
+          `🚀 Put instrument matched -> ${this.ACTIVE_STRATEGIES[matched_index].put_instrument_to_trade?.displayName}`,
           new Date().toString()
         );
         this.ACTIVE_STRATEGIES[matched_index].order_status = 'IDLE';
@@ -472,9 +476,10 @@ class Angel {
         new Date().toString()
       );
       this.ACTIVE_STRATEGIES[matched_index].order_status = 'STRIKE_SELECTION';
-      const searchTermCE = getSearchTerm(matched_strategy, item) + ' ' + 'CE';
+      const matchedSearchTerm = getSearchTerm(matched_strategy, item);
+      const searchTermCE = matchedSearchTerm + ' ' + 'CE';
       this.updateCALLPUTStrikes(searchTermCE, matched_index);
-      const searchTermPE = getSearchTerm(matched_strategy, item) + ' ' + 'PE';
+      const searchTermPE = matchedSearchTerm + ' ' + 'PE';
       this.updateCALLPUTStrikes(searchTermPE, matched_index);
       return;
     } else if (entries_taken_today < max_entries_per_day) {
@@ -551,7 +556,10 @@ class Angel {
         item.last_traded_price
       );
       // check stoploss
-      console.log(`🚀 SL hit for ${matched_strategy.id}`, new Date().toString());
+      console.log(
+        `🚀 SL hit for ${matched_strategy.id}`,
+        new Date().toString()
+      );
 
       if (tradeOptionType === 'CE') {
         this.ACTIVE_STRATEGIES[matched_index].profit_points =

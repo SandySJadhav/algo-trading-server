@@ -178,7 +178,7 @@ const filterInstruments = (instruments: instrument_prop[]) => {
         // conver to days
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         // check if difference is not more than 62 days and not less than today's date
-        if (diffDays > 0 && diffDays < 32) {
+        if (diffDays > 0 && diffDays < 62) {
           // date difference is not more than 61 days
           return true;
         }
@@ -187,8 +187,8 @@ const filterInstruments = (instruments: instrument_prop[]) => {
       }
       return (
         exch_seg === 'NSE' &&
-        !instrumenttype &&
         symbol.endsWith('-EQ') &&
+        !instrumenttype &&
         !expiry
       );
     })
