@@ -1,3 +1,4 @@
+import { commonPrint, getISTTime } from '../helpers';
 import { instrument_prop, strategy_prop } from '../types';
 import Firebase from './instance';
 
@@ -26,7 +27,7 @@ export const cleanAllStrategies = async () => {
   const strategies_colllection = Firebase.db.collection('strategies');
   const response = await strategies_colllection.get();
   if (response.empty) {
-    console.log('🚀 Nothing to reset in 🔥 store ', new Date().toString());
+    console.log('🚀 Nothing to reset in 🔥 store ', commonPrint());
     return [];
   }
   const batch = Firebase.db.batch();
@@ -41,14 +42,14 @@ export const cleanAllStrategies = async () => {
       profit_points: 0
     });
   });
-  console.log('🚀 Reset strategies done in 🔥 store ', new Date().toString());
+  console.log('🚀 Reset strategies done in 🔥 store ', commonPrint());
   return batch.commit();
 };
 
 export const fetchAllActiveStrategies = async () => {
   console.log(
     '🚀 Fetching all active strategies from 🔥 store ',
-    new Date().toString()
+    commonPrint()
   );
   const strategies_colllection = Firebase.db.collection('strategies');
   const response = await strategies_colllection
@@ -56,10 +57,7 @@ export const fetchAllActiveStrategies = async () => {
     .get();
 
   if (response.empty) {
-    console.log(
-      '🚀 No any active strategies found in 🔥 store',
-      new Date().toString()
-    );
+    console.log('🚀 No any active strategies found in 🔥 store', commonPrint());
     return [];
   }
 
@@ -82,9 +80,9 @@ export const fetchAllActiveStrategies = async () => {
       .where('token', 'in', ids)
       .get();
 
-    const newDate = new Date();
-    let hours = newDate.getHours().toString();
-    let minutes = newDate.getMinutes().toString();
+    const newDate = getISTTime();
+    let hours = newDate.hour().toString();
+    let minutes = newDate.minute().toString();
     if (hours.length === 1) {
       hours = '0' + hours;
     }
@@ -111,7 +109,7 @@ export const fetchAllActiveStrategies = async () => {
 
     console.log(
       `🚀 Total ${result.length} active strategies found in 🔥 store`,
-      new Date().toString()
+      commonPrint()
     );
     resolve(result);
   });

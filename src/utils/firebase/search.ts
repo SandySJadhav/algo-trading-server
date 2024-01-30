@@ -1,5 +1,6 @@
 import Firebase from './instance';
 import { instrument_prop, ltp_prop, strategy_prop } from '../types';
+import { getISTTime } from '../helpers';
 
 type SearchProps = {
   searchTerm: string;
@@ -92,16 +93,20 @@ export const searchInFirestore = async (params: SearchProps) => {
       const resData: instrument_prop = res.data();
       const { symbol, exch_seg, name, instrumenttype, expiry } = resData;
       if (exch_seg !== 'NSE') {
-        const expiryDate = new Date(expiry);
-        expiryDate.setHours(23, 59, 59, 999);
+        const expiryDate = getISTTime(expiry).set({
+          hour: 23,
+          minute: 59,
+          second: 59,
+          millisecond: 999
+        });
+
         let newSymbol: string = name;
 
-        const month = months[expiryDate.getMonth()]; // month = JAN
+        const month = months[expiryDate.month()]; // month = JAN
 
         const expDate = expiry.split(month)[0]; // expDate = 31
 
-        newSymbol +=
-          ' ' + expDate + ' ' + month + ' ' + expiryDate.getFullYear();
+        newSymbol += ' ' + expDate + ' ' + month + ' ' + expiryDate.year();
 
         if (['FUTCOM', 'FUTSTK', 'FUTIDX'].includes(instrumenttype)) {
           newSymbol += ' FUT';
