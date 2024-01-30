@@ -187,9 +187,8 @@ const filterInstruments = (instruments: instrument_prop[]) => {
         const diffTime = expiryDate.valueOf() - todayDate.valueOf();
         // conver to days
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        // check if difference is not more than 62 days and not less than today's date
-        if (diffDays > 0 && diffDays < 62) {
-          // date difference is not more than 61 days
+        // check if difference is not more than 35 days and not less than today's date
+        if (diffDays > 0 && diffDays < 35) {
           return true;
         }
         // expiry date is faar away more than what we need
