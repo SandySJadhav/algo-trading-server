@@ -1,5 +1,6 @@
 import Cron from 'croner';
 import Angel from './base';
+import { commonPrint } from '../helpers';
 
 let angelInstance: Angel | null;
 
@@ -30,12 +31,12 @@ const AngelLogin = async () => {
       if (angelInstance?.JWTTOKEN) {
         console.log(
           '🚀 Running previous Angel instance cleanups ',
-          new Date().toString()
+          commonPrint()
         );
         angelInstance.cleanup();
         angelInstance = null;
       }
-      console.log('🚀 Angel Login Croner executed ', new Date().toString());
+      console.log('🚀 Angel Login Croner executed ', commonPrint());
       angelInstance = new Angel();
     }
   );

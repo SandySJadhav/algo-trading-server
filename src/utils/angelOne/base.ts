@@ -7,7 +7,7 @@ import { postRequest } from '../http.interceptor';
 import { fetchAllActiveStrategies } from '../firebase/strategies';
 import { Parser } from 'binary-parser';
 import { instrument_prop, ltp_prop, strategy_prop } from '../types';
-import { _atos, toNumber } from '../helpers';
+import { _atos, commonPrint, getISTTime, toNumber } from '../helpers';
 import generateTOTP from '../totp/base';
 import { placeOrder } from './order';
 import { getSearchTerm, searchInFirestore } from '../firebase/search';
@@ -96,7 +96,7 @@ class Angel {
       'X-ClientPublicIP': '',
       Authorization: ''
     };
-    console.log('🚀 Cleanup done ', new Date().toString());
+    console.log('🚀 Cleanup done ', commonPrint());
   }
 
   /**
@@ -131,7 +131,7 @@ class Angel {
   }
 
   async initiateLiveFeed() {
-    console.log('🚀 Initiate live feed ', new Date().toString());
+    console.log('🚀 Initiate live feed ', commonPrint());
     // TODO - supported only mcx instruments for now
     const allMCXInstruments: string[] = [];
 
@@ -171,10 +171,10 @@ class Angel {
   async getAllInstrumentCandleHistory() {
     let checker = 0;
     const responses: any = [];
-    const newDate = new Date();
-    const day = newDate.getDate();
-    const month = newDate.getMonth();
-    const year = newDate.getFullYear();
+    const newDate = getISTTime();
+    const day = newDate.date();
+    const month = newDate.month();
+    const year = newDate.year();
 
     this.ACTIVE_STRATEGIES.forEach(
       ({
@@ -224,7 +224,7 @@ class Angel {
       } else {
         console.log(
           '🔥 Failed to fetch candlestick data ',
-          new Date().toString(),
+          commonPrint(),
           item
         );
         this.ACTIVE_STRATEGIES[i].market_status = 'CLOSED';
@@ -235,7 +235,7 @@ class Angel {
   }
 
   async login() {
-    console.log('🚀 Angel Login in progress ', new Date().toString());
+    console.log('🚀 Angel Login in progress ', commonPrint());
     const response = await postRequest(
       API.root + API.user_login,
       {
@@ -250,7 +250,7 @@ class Angel {
       this.JWTTOKEN = response.data.jwtToken;
       this.FEEDTOKEN = response.data.feedToken;
       this.headers.Authorization = `Bearer ${this.JWTTOKEN}`;
-      console.log('🚀 Angel Login Success 🥳 ', new Date().toString());
+      console.log('🚀 Angel Login Success 🥳 ', commonPrint());
       this.initiateStrategyLoaderCroner();
     } else {
       this.REFRESHTOKEN = '';
@@ -260,25 +260,22 @@ class Angel {
       console.log(
         '🔥 Angel Login failed message: ',
         response.message,
-        new Date().toString()
+        commonPrint()
       );
       setTimeout(() => {
         if (this.LOGIN_RETRY) {
-          console.log('🚀 Retry login ', new Date().toString());
+          console.log('🚀 Retry login ', commonPrint());
           this.login();
           this.LOGIN_RETRY--;
         } else {
-          console.log('🔥 Login retry limit reached. ', new Date().toString());
+          console.log('🔥 Login retry limit reached. ', commonPrint());
         }
       }, 5000);
     }
   }
 
   initiateStrategyLoaderCroner() {
-    console.log(
-      '🚀 Initializing strategy loader croner ',
-      new Date().toString()
-    );
+    console.log('🚀 Initializing strategy loader croner ', commonPrint());
     // Runs at every 15th minute past every hour from 9-23 on every day-of-week from Monday-Friday
     let strategyScheduledTimer = '*/15 9-23 * * 1-5';
     let strategyCronerMaxRuns;
@@ -292,7 +289,7 @@ class Angel {
       async () => {
         console.log(
           '🚀 Strategy loader 15 minute croner execution Success 🥳 ',
-          new Date().toString()
+          commonPrint()
         );
         // close old connections
         this.WS?.close?.();
@@ -301,8 +298,8 @@ class Angel {
       }
     );
     if (process.env.ENVIRONMENT !== 'dev') {
-      const newDate = new Date();
-      if (newDate.getHours() > 9 && newDate.getHours() < 23) {
+      const newDate = getISTTime();
+      if (newDate.hour() > 9 && newDate.hour() < 23) {
         this.STRATEGIES_CRONER.trigger();
       }
     }
@@ -346,7 +343,7 @@ class Angel {
         });
         this.WS_WATCH_LIST_PAYLOADS = [];
       }
-      console.log('🚀 Websockets is ❤️ ', new Date().toString());
+      console.log('🚀 Websockets is ❤️ ', commonPrint());
     });
 
     this.WS.on('message', async (data: any) => {
@@ -369,11 +366,7 @@ class Angel {
           }
         });
       } else if (data.toString() !== 'pong') {
-        console.log(
-          '🔥 Untracked message -> ',
-          data.toString(),
-          new Date().toString()
-        );
+        console.log('🔥 Untracked message -> ', data.toString(), commonPrint());
       }
     });
   }
@@ -421,8 +414,12 @@ class Angel {
         this.ACTIVE_STRATEGIES[matched_index].put_instrument_to_trade
       ) {
         console.log(
-          '🚀 Matching call & put instruments found ',
-          new Date().toString()
+          `🚀 Call instrument matched -> ${this.ACTIVE_STRATEGIES[matched_index].call_instrument_to_trade?.displayName}`,
+          commonPrint()
+        );
+        console.log(
+          `🚀 Put instrument matched -> ${this.ACTIVE_STRATEGIES[matched_index].put_instrument_to_trade?.displayName}`,
+          commonPrint()
         );
         this.ACTIVE_STRATEGIES[matched_index].order_status = 'IDLE';
       }
@@ -430,7 +427,7 @@ class Angel {
       console.log(
         `🔥 Strike price selection API failed for ${searchTerm}`,
         response,
-        new Date().toString()
+        commonPrint()
       );
     }
   }
@@ -454,27 +451,22 @@ class Angel {
         this.handleExitStrategy(item, matched_index);
         return;
       } else if (order_status === 'FAILED') {
-        console.log(
-          `🚀 Orders failed for strategy ${id} `,
-          new Date().toString()
-        );
+        console.log(`🚀 Orders failed for strategy ${id} `, commonPrint());
         return;
       } else {
         console.log(
           `🚀 Strategy: ${id}, Operations in progress -> ${order_status} `,
-          new Date().toString()
+          commonPrint()
         );
         return;
       }
     } else if (!call_instrument_to_trade || !put_instrument_to_trade) {
-      console.log(
-        '🚀 Searching for call & put instruments ',
-        new Date().toString()
-      );
+      console.log('🚀 Searching for call & put instruments ', commonPrint());
       this.ACTIVE_STRATEGIES[matched_index].order_status = 'STRIKE_SELECTION';
-      const searchTermCE = getSearchTerm(matched_strategy, item) + ' ' + 'CE';
+      const matchedSearchTerm = getSearchTerm(matched_strategy, item);
+      const searchTermCE = matchedSearchTerm + ' ' + 'CE';
       this.updateCALLPUTStrikes(searchTermCE, matched_index);
-      const searchTermPE = getSearchTerm(matched_strategy, item) + ' ' + 'PE';
+      const searchTermPE = matchedSearchTerm + ' ' + 'PE';
       this.updateCALLPUTStrikes(searchTermPE, matched_index);
       return;
     } else if (entries_taken_today < max_entries_per_day) {
@@ -486,16 +478,16 @@ class Angel {
       } else {
         console.log(
           '🔥 Handle for this type of execution is not written!!! ',
-          new Date().toString()
+          commonPrint()
         );
       }
     }
   }
 
   async handleExitStrategy(item: ltp_prop, matched_index: number) {
-    const newDate = new Date();
-    const hours = newDate.getHours();
-    const minutes = newDate.getMinutes();
+    const newDate = getISTTime();
+    const hours = newDate.hour();
+    const minutes = newDate.minute();
     const matched_strategy = this.ACTIVE_STRATEGIES[matched_index];
 
     const tradeOptionType = this.ACTIVE_STRATEGIES[matched_index]
@@ -529,10 +521,7 @@ class Angel {
         this.ACTIVE_STRATEGIES[matched_index].entry_price =
           matched_strategy.entry_price - matched_strategy.trailing_sl_points;
       }
-      console.log(
-        `🚀 Trailing sl for ${matched_strategy.id}`,
-        new Date().toString()
-      );
+      console.log(`🚀 Trailing sl for ${matched_strategy.id}`, commonPrint());
     } else if (
       Number(hours + '.' + minutes) > matched_strategy.stop_entry_after ||
       (tradeOptionType === 'CE' &&
@@ -551,7 +540,7 @@ class Angel {
         item.last_traded_price
       );
       // check stoploss
-      console.log(`🚀 SL hit for ${matched_strategy.id}`, new Date().toString());
+      console.log(`🚀 SL hit for ${matched_strategy.id}`, commonPrint());
 
       if (tradeOptionType === 'CE') {
         this.ACTIVE_STRATEGIES[matched_index].profit_points =
@@ -592,9 +581,9 @@ class Angel {
   }
 
   async handleCrossing(item: ltp_prop, matched_index: number) {
-    const newDate = new Date();
-    const hours = newDate.getHours();
-    const minutes = newDate.getMinutes();
+    const newDate = getISTTime();
+    const hours = newDate.hour();
+    const minutes = newDate.minute();
 
     const matched_strategy = this.ACTIVE_STRATEGIES[matched_index];
     if (
@@ -614,7 +603,7 @@ class Angel {
           this.ACTIVE_STRATEGIES[matched_index].previous_candle_low -
           matched_strategy.buffer_points
         }`,
-        new Date().toString()
+        commonPrint()
       );
       if (
         Number(item.last_traded_price) >=
@@ -630,7 +619,7 @@ class Angel {
         );
         console.log(
           `🚀 CE Order placement criteria met for strategy ${this.ACTIVE_STRATEGIES[matched_index].id}`,
-          new Date().toString()
+          commonPrint()
         );
         const order = await placeOrder(
           {
@@ -676,7 +665,7 @@ class Angel {
         );
         console.log(
           `🚀 PE Order placement criteria met for strategy ${this.ACTIVE_STRATEGIES[matched_index].id}`,
-          new Date().toString()
+          commonPrint()
         );
         const order = await placeOrder(
           {

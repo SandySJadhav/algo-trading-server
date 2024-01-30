@@ -2,7 +2,7 @@ import Cron from 'croner';
 import Firebase from './instance';
 import fetch from 'node-fetch';
 import { Timestamp } from 'firebase-admin/firestore';
-import { sanitizeText } from '../helpers';
+import { commonPrint, getISTTime, sanitizeText } from '../helpers';
 import { instrument_prop } from '../types';
 import { cleanAllStrategies } from './strategies';
 
@@ -68,12 +68,16 @@ const formatPayload = ({
   // rel_keywords are related to symbol
   const rel_keywords: any = [];
 
-  const expiryDate = new Date(expiry || '12DEC9999');
-  expiryDate.setHours(23, 59, 59, 999);
+  const expiryDate = getISTTime(expiry || '12DEC9999').set({
+    hour: 23,
+    minute: 59,
+    second: 59,
+    millisecond: 999
+  });
 
   if (exch_seg !== 'NSE') {
     // stocks don't have expiry
-    const month = months[expiryDate.getMonth()]; // month = JAN
+    const month = months[expiryDate.month()]; // month = JAN
     const expDate = expiry.split(month)[0]; // expDate = 31
     if (!keywordExists(rel_keywords, month)) {
       rel_keywords.push(month); // JAN
@@ -147,7 +151,7 @@ const formatPayload = ({
   }
 
   return {
-    expiry_timestamp: Timestamp.fromDate(expiryDate),
+    expiry_timestamp: Timestamp.fromMillis(expiryDate.valueOf()),
     token,
     symbol,
     name,
@@ -166,19 +170,25 @@ const filterInstruments = (instruments: instrument_prop[]) => {
     .filter(({ exch_seg, expiry, symbol, instrumenttype }: instrument_prop) => {
       if (supportedInstruments[exch_seg]?.[instrumenttype] && expiry) {
         // either NFO or MCX, load only next 1 month of data
-        const expiryDate = new Date(expiry);
-        // set time as day end
-        expiryDate.setHours(23, 59, 59, 999);
+        const expiryDate = getISTTime(expiry).set({
+          hour: 23,
+          minute: 59,
+          second: 59,
+          millisecond: 999
+        });
         // get todays date for comparison
-        const todayDate = new Date();
-        // set time as day start
-        todayDate.setHours(0, 0, 0, 0);
+        const todayDate = getISTTime().set({
+          hour: 0,
+          minute: 0,
+          second: 0,
+          millisecond: 0
+        });
         // get difference in missiseconds
         const diffTime = expiryDate.valueOf() - todayDate.valueOf();
         // conver to days
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         // check if difference is not more than 62 days and not less than today's date
-        if (diffDays > 0 && diffDays < 32) {
+        if (diffDays > 0 && diffDays < 62) {
           // date difference is not more than 61 days
           return true;
         }
@@ -187,8 +197,8 @@ const filterInstruments = (instruments: instrument_prop[]) => {
       }
       return (
         exch_seg === 'NSE' &&
-        !instrumenttype &&
         symbol.endsWith('-EQ') &&
+        !instrumenttype &&
         !expiry
       );
     })
@@ -302,11 +312,16 @@ const initiateDataSync = async () => {
   const deleteInstrumentList: any[] = [];
 
   try {
-    const dtStart = new Date();
-    dtStart.setHours(0, 0, 0, 0);
+    const dtStart = getISTTime().set({
+      hour: 0,
+      minute: 0,
+      second: 0,
+      millisecond: 0
+    });
+
     // find contracts expired at 12AM midnight
     const docs = await collection
-      .where('expiry_timestamp', '<', Timestamp.fromDate(dtStart))
+      .where('expiry_timestamp', '<', Timestamp.fromMillis(dtStart.valueOf()))
       .get();
     // all these documents are going to be delete because they are expired
     docs.forEach((doc: any) => {
@@ -334,10 +349,10 @@ const initiateDataSync = async () => {
       console.log('🚀 Record Count: ', selectedInstruments.length);
       await processInstruments(selectedInstruments, collection, false);
     } else {
-      console.log('🚀 Everything up to date 🏄 ', new Date().toString());
+      console.log('🚀 Everything up to date 🏄 ', commonPrint());
     }
   } else {
-    console.log('🚀 Everything up to date 🏄 ', new Date().toString());
+    console.log('🚀 Everything up to date 🏄 ', commonPrint());
   }
 };
 
@@ -365,7 +380,7 @@ export const startCronerToSyncInstruments = () => {
   const instrumentSyncCroner = Cron(scheduledTimer, { maxRuns }, async () => {
     console.log(
       '🚀 Starting data sync with Angel and 🔥 store ',
-      new Date().toString()
+      commonPrint()
     );
     cleanAllStrategies();
     initiateDataSync();

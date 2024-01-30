@@ -1,3 +1,13 @@
+import moment from 'moment-timezone';
+moment.tz.setDefault('Asia/Kolkata');
+
+export const getISTTime = (dte?: string) => moment(dte);
+
+export const commonPrint = () => {
+  const time = getISTTime();
+  return ` => Execution Date-> ${time.date()}-${time.month()}-${time.year()} ~ Time-> ${time.hours()}:${time.minutes()}:${time.seconds()}`;
+};
+
 /**
  * @param text String
  * @returns String
