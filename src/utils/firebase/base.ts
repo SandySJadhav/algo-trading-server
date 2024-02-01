@@ -2,7 +2,12 @@ import Cron from 'croner';
 import Firebase from './instance';
 import fetch from 'node-fetch';
 import { Timestamp } from 'firebase-admin/firestore';
-import { commonPrint, getISTTime, sanitizeText } from '../helpers';
+import {
+  commonPrint,
+  getISTTime,
+  getMomentPayload,
+  sanitizeText
+} from '../helpers';
 import { instrument_prop } from '../types';
 import { cleanAllStrategies } from './strategies';
 
@@ -29,21 +34,6 @@ const supportedInstruments: any = {
   }
 };
 
-const months = [
-  'JAN',
-  'FEB',
-  'MAR',
-  'APR',
-  'MAY',
-  'JUN',
-  'JUL',
-  'AUG',
-  'SEP',
-  'OCT',
-  'NOV',
-  'DEC'
-];
-
 /**
  *
  * @param list - String[]
@@ -67,23 +57,16 @@ const formatPayload = ({
   const name_keywords: any = [];
   // rel_keywords are related to symbol
   const rel_keywords: any = [];
-
-  const expiryDate = getISTTime(expiry || '12DEC9999').set({
-    hour: 23,
-    minute: 59,
-    second: 59,
-    millisecond: 999
-  });
+  const payload = getMomentPayload(expiry || '12DEC9999');
+  const expiryDate = getISTTime().set(payload);
 
   if (exch_seg !== 'NSE') {
     // stocks don't have expiry
-    const month = months[expiryDate.month()]; // month = JAN
-    const expDate = expiry.split(month)[0]; // expDate = 31
-    if (!keywordExists(rel_keywords, month)) {
-      rel_keywords.push(month); // JAN
+    if (!keywordExists(rel_keywords, payload.month + '')) {
+      rel_keywords.push(payload.month + ''); // JAN
     }
-    if (!keywordExists(rel_keywords, expDate)) {
-      rel_keywords.push(expDate); // 31
+    if (!keywordExists(rel_keywords, payload.date + '')) {
+      rel_keywords.push(payload.date + ''); // 07
     }
     if (['FUTCOM', 'FUTSTK', 'FUTIDX'].includes(instrumenttype)) {
       if (!keywordExists(rel_keywords, 'FUT')) {
@@ -170,12 +153,9 @@ const filterInstruments = (instruments: instrument_prop[]) => {
     .filter(({ exch_seg, expiry, symbol, instrumenttype }: instrument_prop) => {
       if (supportedInstruments[exch_seg]?.[instrumenttype] && expiry) {
         // either NFO or MCX, load only next 1 month of data
-        const expiryDate = getISTTime(expiry).set({
-          hour: 23,
-          minute: 59,
-          second: 59,
-          millisecond: 999
-        });
+        const payload = getMomentPayload(expiry);
+        const expiryDate = getISTTime().set(payload);
+
         // get todays date for comparison
         const todayDate = getISTTime().set({
           hour: 0,
@@ -330,7 +310,7 @@ const initiateDataSync = async () => {
     console.log(JSON.parse(JSON.stringify(error)));
     return;
   }
-  if (deleteInstrumentList.length > 0) {
+  if (deleteInstrumentList.length >= 0) {
     // proceed to delete instruments from database;
     console.log(`🚀 Found expired ${deleteInstrumentList.length} instruments`);
     await processInstruments(deleteInstrumentList, collection, true);
