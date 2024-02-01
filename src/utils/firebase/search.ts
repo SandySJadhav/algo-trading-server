@@ -1,6 +1,6 @@
 import Firebase from './instance';
 import { instrument_prop, ltp_prop, strategy_prop } from '../types';
-import { getISTTime } from '../helpers';
+import { getISTTime, getMomentPayload } from '../helpers';
 
 type SearchProps = {
   searchTerm: string;
@@ -93,17 +93,10 @@ export const searchInFirestore = async (params: SearchProps) => {
       const resData: instrument_prop = res.data();
       const { symbol, exch_seg, name, instrumenttype, expiry } = resData;
       if (exch_seg !== 'NSE') {
-        const expiryDate = getISTTime(expiry).set({
-          hour: 23,
-          minute: 59,
-          second: 59,
-          millisecond: 999
-        });
-
+        const payload = getMomentPayload(expiry);
+        const expiryDate = getISTTime().set(payload);
         let newSymbol: string = name;
-
         const month = months[expiryDate.month()]; // month = JAN
-
         const expDate = expiry.split(month)[0]; // expDate = 31
 
         newSymbol += ' ' + expDate + ' ' + month + ' ' + expiryDate.year();

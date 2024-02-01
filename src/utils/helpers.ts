@@ -1,11 +1,51 @@
 import moment from 'moment-timezone';
 moment.tz.setDefault('Asia/Kolkata');
 
-export const getISTTime = (dte?: string) => moment(dte);
+export const getISTTime = () => moment();
 
 export const commonPrint = () => {
   const time = getISTTime();
-  return ` => Execution Date-> ${time.date()}-${time.month()}-${time.year()} ~ Time-> ${time.hours()}:${time.minutes()}:${time.seconds()}`;
+  return ` => Execution Date-> ${time.date()}-${time.month() + 1}-${time.year()} ~ Time-> ${time.hours()}:${time.minutes()}:${time.seconds()}`;
+};
+
+const months = [
+  'JAN',
+  'FEB',
+  'MAR',
+  'APR',
+  'MAY',
+  'JUN',
+  'JUL',
+  'AUG',
+  'SEP',
+  'OCT',
+  'NOV',
+  'DEC'
+];
+
+export const getMomentPayload = (str: string) => {
+  const expDate = str.substring(0, 2); // expDate = 31
+  const month = str.substring(2, 5); // month = JAN
+  const year = str.substring(5); // month = JAN
+
+  const payload: any = {
+    hour: 23,
+    minute: 59,
+    second: 59,
+    millisecond: 999
+  };
+
+  if (!isNaN(Number(expDate))) {
+    payload.date = Number(expDate);
+  }
+  if (months.indexOf(month) !== -1) {
+    payload.month = months.indexOf(month);
+  }
+  if (!isNaN(Number(year))) {
+    payload.year = Number(year);
+  }
+
+  return payload;
 };
 
 /**
