@@ -8,7 +8,7 @@ export const commonPrint = () => {
   return ` => Execution Date-> ${time.date()}-${time.month() + 1}-${time.year()} ~ Time-> ${time.hours()}:${time.minutes()}:${time.seconds()}`;
 };
 
-const months = [
+export const MONTHS = [
   'JAN',
   'FEB',
   'MAR',
@@ -38,8 +38,8 @@ export const getMomentPayload = (str: string) => {
   if (!isNaN(Number(expDate))) {
     payload.date = Number(expDate);
   }
-  if (months.indexOf(month) !== -1) {
-    payload.month = months.indexOf(month);
+  if (MONTHS.indexOf(month) !== -1) {
+    payload.month = MONTHS.indexOf(month);
   }
   if (!isNaN(Number(year))) {
     payload.year = Number(year);

@@ -3,6 +3,7 @@ import Firebase from './instance';
 import fetch from 'node-fetch';
 import { Timestamp } from 'firebase-admin/firestore';
 import {
+  MONTHS,
   commonPrint,
   getISTTime,
   getMomentPayload,
@@ -62,8 +63,11 @@ const formatPayload = ({
 
   if (exch_seg !== 'NSE') {
     // stocks don't have expiry
-    if (!keywordExists(rel_keywords, payload.month + '')) {
-      rel_keywords.push(payload.month + ''); // JAN
+    if (
+      MONTHS[payload.month] &&
+      !keywordExists(rel_keywords, MONTHS[payload.month])
+    ) {
+      rel_keywords.push(MONTHS[payload.month]); // JAN
     }
     if (!keywordExists(rel_keywords, payload.date + '')) {
       rel_keywords.push(payload.date + ''); // 07
@@ -310,7 +314,7 @@ const initiateDataSync = async () => {
     console.log(JSON.parse(JSON.stringify(error)));
     return;
   }
-  if (deleteInstrumentList.length >= 0) {
+  if (deleteInstrumentList.length > 0) {
     // proceed to delete instruments from database;
     console.log(`🚀 Found expired ${deleteInstrumentList.length} instruments`);
     await processInstruments(deleteInstrumentList, collection, true);
