@@ -54,6 +54,7 @@ export const fetchAllActiveStrategies = async () => {
   const strategies_colllection = Firebase.db.collection('strategies');
   const response = await strategies_colllection
     .where('status', '==', 'ACTIVE')
+    .where('order_status', '==', 'IDLE')
     .get();
 
   if (response.empty) {
