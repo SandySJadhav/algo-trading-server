@@ -488,12 +488,10 @@ class Angel {
     const hours = newDate.hour();
     const minutes = newDate.minute();
     const matched_strategy = this.ACTIVE_STRATEGIES[matched_index];
-
     const tradeOptionType = this.ACTIVE_STRATEGIES[matched_index]
       .call_instrument_to_trade
       ? 'CE'
       : 'PE';
-
     const instrument_to_trade =
       tradeOptionType === 'CE'
         ? this.ACTIVE_STRATEGIES[matched_index].call_instrument_to_trade
@@ -514,11 +512,11 @@ class Angel {
     ) {
       // check for target, increase the sl
       if (tradeOptionType === 'CE') {
-        this.ACTIVE_STRATEGIES[matched_index].entry_price =
-          matched_strategy.entry_price + matched_strategy.trailing_sl_points;
+        this.ACTIVE_STRATEGIES[matched_index].entry_price +=
+          matched_strategy.trailing_sl_points;
       } else {
-        this.ACTIVE_STRATEGIES[matched_index].entry_price =
-          matched_strategy.entry_price - matched_strategy.trailing_sl_points;
+        this.ACTIVE_STRATEGIES[matched_index].entry_price -=
+          matched_strategy.trailing_sl_points;
       }
       console.log(`🚀 Trailing sl for ${matched_strategy.id}`, commonPrint());
     } else if (
@@ -528,12 +526,15 @@ class Angel {
           matched_strategy.previous_candle_low ||
           Number(item.last_traded_price) <=
             matched_strategy.entry_price -
-              matched_strategy.trailing_sl_points)) ||
+              matched_strategy.trailing_sl_points -
+              10)) ||
       (tradeOptionType === 'PE' &&
         (Number(item.last_traded_price) >=
           matched_strategy.previous_candle_high ||
           Number(item.last_traded_price) >=
-            matched_strategy.entry_price + matched_strategy.trailing_sl_points))
+            matched_strategy.entry_price +
+              matched_strategy.trailing_sl_points +
+              10))
     ) {
       this.ACTIVE_STRATEGIES[matched_index].exit_price = Number(
         item.last_traded_price
@@ -599,6 +600,9 @@ class Angel {
         this.WS.send(payload);
       } else {
         this.ACTIVE_STRATEGIES[matched_index].order_status = 'FAILED';
+        console.log(
+          `🔥 failed to exit strategy ${matched_strategy.id} ---------------------------------------------------------`
+        );
       }
     }
   }
