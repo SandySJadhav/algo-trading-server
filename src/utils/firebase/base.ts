@@ -353,14 +353,9 @@ export const startCronerToSyncInstruments = () => {
    * │ │ │ │ │ │
    * * * * * * *
    */
-  let maxRuns;
-  let scheduledTimer = '0 0 5 * * 1-5'; // At 05:00 on every day-of-week from Monday through Friday.
-  // for dev mode, run cron job im
-  if (process.env.ENVIRONMENT === 'dev') {
-    maxRuns = 1;
-    scheduledTimer = '* * * * * *';
-  }
-  const instrumentSyncCroner = Cron(scheduledTimer, { maxRuns }, async () => {
+
+  // At 05:00 on every day-of-week from Monday through Friday.
+  const instrumentSyncCroner = Cron('0 0 5 * * 1-5', async () => {
     console.log(
       '🚀 Starting data sync with Angel and 🔥 store ',
       commonPrint()
