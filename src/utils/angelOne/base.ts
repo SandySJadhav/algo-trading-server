@@ -277,7 +277,7 @@ class Angel {
   initiateStrategyLoaderCroner() {
     console.log('🚀 Initializing strategy loader croner ', commonPrint());
     // Runs at every 15th minute past every hour from 9-23 on every day-of-week from Monday-Friday
-    let strategyScheduledTimer = '*/5 9-23 * * 1-5';
+    let strategyScheduledTimer = '*/15 9-23 * * 1-5';
     let strategyCronerMaxRuns;
     if (process.env.ENVIRONMENT === 'dev') {
       strategyCronerMaxRuns = 1;
