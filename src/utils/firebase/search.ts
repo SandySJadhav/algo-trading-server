@@ -27,7 +27,7 @@ const getFilteredResults = (results: instrument_prop[], query: string[]) => {
     // count matching records
     let matches = 0;
     query.forEach((item: string) => {
-      result.rel_keywords.forEach((keyword: string) => {
+      result.rel_keywords?.forEach((keyword: string) => {
         if (keyword === item) {
           matches++;
         }

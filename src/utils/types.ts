@@ -14,7 +14,7 @@ export interface instrument_prop {
     | 'FUTIDX';
   exch_seg: string;
   tick_size: any;
-  rel_keywords: string[];
+  rel_keywords?: string[];
   matches?: any;
   displayName?: string;
 }

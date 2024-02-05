@@ -393,7 +393,7 @@ class Angel {
     if (response.statusCode === 200 && response.data?.length === 2) {
       const call_instrument_to_trade = <instrument_prop>(
         response.data.find((item: instrument_prop) =>
-          item.rel_keywords.includes('CE')
+          item.rel_keywords?.includes('CE')
         )
       );
       if (call_instrument_to_trade) {
@@ -402,7 +402,7 @@ class Angel {
       }
       const put_instrument_to_trade = <instrument_prop>(
         response.data.find((item: instrument_prop) =>
-          item.rel_keywords.includes('PE')
+          item.rel_keywords?.includes('PE')
         )
       );
       if (put_instrument_to_trade) {
