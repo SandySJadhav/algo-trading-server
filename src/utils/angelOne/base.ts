@@ -453,9 +453,11 @@ class Angel {
       } else if (order_status === 'FAILED') {
         console.log(`🚀 Orders failed for strategy ${id} `, commonPrint());
         return;
+      } else if (order_status === 'COMPLETED') {
+        return;
       } else {
         console.log(
-          `🚀 Strategy: ${id}, Operations in progress -> ${order_status} `,
+          `🚀 Strategy: ${id}, Operation in progress -> ${order_status} `,
           commonPrint()
         );
         return;
@@ -574,6 +576,30 @@ class Angel {
       );
       if (order.status) {
         this.ACTIVE_STRATEGIES[matched_index].order_status = 'COMPLETED';
+        console.log(
+          `🚀 Trade completed for ${matched_strategy.id}`,
+          commonPrint()
+        );
+        // unsubscribe from websocket listenings
+        const payload: {
+          action: number;
+          params: {
+            mode: number;
+            tokenList: any[];
+          };
+        } = {
+          action: ACTION.Unsubscribe,
+          params: {
+            mode: MODE.LTP,
+            tokenList: [
+              {
+                exchangeType: EXCHANGES.mcx_fo,
+                tokens: [instrument_to_trade?.token]
+              }
+            ]
+          }
+        };
+        this.WS.send(payload);
       } else {
         this.ACTIVE_STRATEGIES[matched_index].order_status = 'FAILED';
       }
