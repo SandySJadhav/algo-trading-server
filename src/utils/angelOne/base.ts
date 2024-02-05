@@ -390,10 +390,10 @@ class Angel {
 
   async updateCALLPUTStrikes(searchTerm: string, matched_index: number) {
     const response = await searchInFirestore({ searchTerm });
-    if (response.statusCode === 200 && response.data?.length === 1) {
+    if (response.statusCode === 200 && response.data?.length === 2) {
       const call_instrument_to_trade = <instrument_prop>(
-        response.data.find(
-          (item: instrument_prop) => item.rel_keywords.indexOf('CE') !== -1
+        response.data.find((item: instrument_prop) =>
+          item.rel_keywords.includes('CE')
         )
       );
       if (call_instrument_to_trade) {
@@ -401,8 +401,8 @@ class Angel {
           call_instrument_to_trade;
       }
       const put_instrument_to_trade = <instrument_prop>(
-        response.data.find(
-          (item: instrument_prop) => item.rel_keywords.indexOf('PE') !== -1
+        response.data.find((item: instrument_prop) =>
+          item.rel_keywords.includes('PE')
         )
       );
       if (put_instrument_to_trade) {
@@ -466,10 +466,7 @@ class Angel {
       console.log('🚀 Searching for call & put instruments ', commonPrint());
       this.ACTIVE_STRATEGIES[matched_index].order_status = 'STRIKE_SELECTION';
       const matchedSearchTerm = getSearchTerm(matched_strategy, item);
-      const searchTermCE = matchedSearchTerm + ' ' + 'CE';
-      this.updateCALLPUTStrikes(searchTermCE, matched_index);
-      const searchTermPE = matchedSearchTerm + ' ' + 'PE';
-      this.updateCALLPUTStrikes(searchTermPE, matched_index);
+      this.updateCALLPUTStrikes(matchedSearchTerm, matched_index);
       return;
     } else if (entries_taken_today < max_entries_per_day) {
       if (
