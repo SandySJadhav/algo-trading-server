@@ -40,7 +40,8 @@ export const cleanAllStrategies = async () => {
       trade_type: '',
       entry_price: 0,
       exit_price: 0,
-      profit_points: 0
+      profit_points: 0,
+      trailed_sl: 0
     });
   });
   console.log('🚀 Reset strategies done in 🔥 store ', commonPrint());

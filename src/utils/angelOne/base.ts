@@ -352,15 +352,16 @@ class Angel {
       if (subscription_mode.parse(data)?.subscription_mode === MODE.LTP) {
         const res = await this.getLTP(data);
         res.token = JSON.parse(res.token);
+        const ltp = Number(res.last_traded_price);
         this.ACTIVE_STRATEGIES.forEach((strategy: any, index) => {
           if (strategy.instrument_to_watch.token === res.token) {
             const tick_size = Number(
               this.ACTIVE_STRATEGIES[index].instrument_to_watch.tick_size
             );
             if (tick_size > 1) {
-              res.last_traded_price = Number(res.last_traded_price) / tick_size;
+              res.last_traded_price = ltp / tick_size;
             } else {
-              res.last_traded_price = Number(res.last_traded_price);
+              res.last_traded_price = ltp;
             }
             this.handleExecution(res, index);
           }
@@ -565,52 +566,37 @@ class Angel {
     const minutes = newDate.minute();
     const matched_strategy = this.ACTIVE_STRATEGIES[matched_index];
     const type = matched_strategy.trade_type;
+    const ltp = Number(item.last_traded_price);
 
     if (
-      Number(hours + '.' + minutes) <= matched_strategy.stop_entry_after &&
-      ((type === 'CE' &&
-        Number(item.last_traded_price) >=
-          matched_strategy.entry_price +
-            matched_strategy.trailing_sl_points +
-            5) ||
-        (type === 'PE' &&
-          Number(item.last_traded_price) <=
-            matched_strategy.entry_price -
-              matched_strategy.trailing_sl_points -
-              5))
-    ) {
-      // check for target, increase the sl
-      if (type === 'CE') {
-        this.ACTIVE_STRATEGIES[matched_index].entry_price +=
-          matched_strategy.trailing_sl_points;
-      } else {
-        this.ACTIVE_STRATEGIES[matched_index].entry_price -=
-          matched_strategy.trailing_sl_points;
-      }
-      console.log(`🚀 Trailing sl for ${matched_strategy.id}`, commonPrint());
-    } else if (
       Number(hours + '.' + minutes) > matched_strategy.stop_entry_after ||
-      (type === 'CE' &&
-        (Number(item.last_traded_price) <=
-          matched_strategy.previous_candle_low ||
-          Number(item.last_traded_price) <=
-            matched_strategy.entry_price -
-              matched_strategy.trailing_sl_points -
-              10)) ||
-      (type === 'PE' &&
-        (Number(item.last_traded_price) >=
-          matched_strategy.previous_candle_high ||
-          Number(item.last_traded_price) >=
-            matched_strategy.entry_price +
-              matched_strategy.trailing_sl_points +
-              10))
+      (type === 'CE' && ltp < matched_strategy.trailed_sl) ||
+      (type === 'PE' && ltp > matched_strategy.trailed_sl)
     ) {
-      this.ACTIVE_STRATEGIES[matched_index].exit_price = Number(
-        item.last_traded_price
-      );
+      this.ACTIVE_STRATEGIES[matched_index].exit_price = ltp;
       // check stoploss
       console.log(`🚀 SL hit for ${matched_strategy.id}`, commonPrint());
       this.exitOrder(matched_index);
+    } else {
+      // check for target, increase the sl
+      if (
+        type === 'CE' &&
+        ltp >
+          matched_strategy.entry_price + matched_strategy.trailing_sl_points &&
+        ltp > matched_strategy.trailed_sl + matched_strategy.trailing_sl_points
+      ) {
+        this.ACTIVE_STRATEGIES[matched_index].trailed_sl =
+          ltp - matched_strategy.trailing_sl_points;
+      } else if (
+        type === 'PE' &&
+        ltp <
+          matched_strategy.entry_price - matched_strategy.trailing_sl_points &&
+        ltp < matched_strategy.trailed_sl - matched_strategy.trailing_sl_points
+      ) {
+        this.ACTIVE_STRATEGIES[matched_index].trailed_sl =
+          ltp + matched_strategy.trailing_sl_points;
+      }
+      console.log(`🚀 Trailing sl for ${matched_strategy.id}`, commonPrint());
     }
   }
 
@@ -660,6 +646,7 @@ class Angel {
     const newDate = getISTTime();
     const hours = newDate.hour();
     const minutes = newDate.minute();
+    const ltp = Number(item.last_traded_price);
     // pattern here for data field -  [timestamp, open, high, low, close, volume]
     const matched_strategy = this.ACTIVE_STRATEGIES[matched_index];
     if (
@@ -672,7 +659,7 @@ class Angel {
         this.getPreviousCandleLow(matched_strategy.data);
       // we can take entry here
       console.log(
-        `🚀 Waiting for entry -> LTP: ${Number(item.last_traded_price)}, >= ${
+        `🚀 Waiting for entry -> LTP: ${ltp}, >= ${
           this.ACTIVE_STRATEGIES[matched_index].previous_candle_high +
           matched_strategy.buffer_points
         } or <= ${
@@ -682,22 +669,22 @@ class Angel {
         commonPrint()
       );
       if (
-        Number(item.last_traded_price) >=
+        ltp >=
         this.ACTIVE_STRATEGIES[matched_index].previous_candle_high +
           matched_strategy.buffer_points
       ) {
-        this.ACTIVE_STRATEGIES[matched_index].entry_price = Number(
-          item.last_traded_price
-        );
+        this.ACTIVE_STRATEGIES[matched_index].trailed_sl =
+          this.ACTIVE_STRATEGIES[matched_index].previous_candle_low;
+        this.ACTIVE_STRATEGIES[matched_index].entry_price = ltp;
         this.placeMarketOrder('CE', matched_index);
       } else if (
-        Number(item.last_traded_price) <=
+        ltp <=
         this.ACTIVE_STRATEGIES[matched_index].previous_candle_low -
           matched_strategy.buffer_points
       ) {
-        this.ACTIVE_STRATEGIES[matched_index].entry_price = Number(
-          item.last_traded_price
-        );
+        this.ACTIVE_STRATEGIES[matched_index].trailed_sl =
+          this.ACTIVE_STRATEGIES[matched_index].previous_candle_high;
+        this.ACTIVE_STRATEGIES[matched_index].entry_price = ltp;
         this.placeMarketOrder('PE', matched_index);
       }
     } else {
