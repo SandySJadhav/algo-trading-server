@@ -492,16 +492,14 @@ class Angel {
 
   async exitOrder(matched_index: number) {
     const matched_strategy = this.ACTIVE_STRATEGIES[matched_index];
-    const tradeOptionType = this.ACTIVE_STRATEGIES[matched_index]
-      .call_instrument_to_trade
-      ? 'CE'
-      : 'PE';
+    const type = matched_strategy.trade_type;
+
     const instrument_to_trade =
-      tradeOptionType === 'CE'
+      type === 'CE'
         ? matched_strategy.call_instrument_to_trade
         : matched_strategy.put_instrument_to_trade;
 
-    if (tradeOptionType === 'CE') {
+    if (type === 'CE') {
       this.ACTIVE_STRATEGIES[matched_index].profit_points =
         matched_strategy.exit_price - matched_strategy.entry_price - 2;
     } else {
@@ -566,26 +564,23 @@ class Angel {
     const hours = newDate.hour();
     const minutes = newDate.minute();
     const matched_strategy = this.ACTIVE_STRATEGIES[matched_index];
-    const tradeOptionType = this.ACTIVE_STRATEGIES[matched_index]
-      .call_instrument_to_trade
-      ? 'CE'
-      : 'PE';
+    const type = matched_strategy.trade_type;
 
     if (
       Number(hours + '.' + minutes) <= matched_strategy.stop_entry_after &&
-      ((tradeOptionType === 'CE' &&
+      ((type === 'CE' &&
         Number(item.last_traded_price) >=
           matched_strategy.entry_price +
             matched_strategy.trailing_sl_points +
             5) ||
-        (tradeOptionType === 'PE' &&
+        (type === 'PE' &&
           Number(item.last_traded_price) <=
             matched_strategy.entry_price -
               matched_strategy.trailing_sl_points -
               5))
     ) {
       // check for target, increase the sl
-      if (tradeOptionType === 'CE') {
+      if (type === 'CE') {
         this.ACTIVE_STRATEGIES[matched_index].entry_price +=
           matched_strategy.trailing_sl_points;
       } else {
@@ -595,14 +590,14 @@ class Angel {
       console.log(`🚀 Trailing sl for ${matched_strategy.id}`, commonPrint());
     } else if (
       Number(hours + '.' + minutes) > matched_strategy.stop_entry_after ||
-      (tradeOptionType === 'CE' &&
+      (type === 'CE' &&
         (Number(item.last_traded_price) <=
           matched_strategy.previous_candle_low ||
           Number(item.last_traded_price) <=
             matched_strategy.entry_price -
               matched_strategy.trailing_sl_points -
               10)) ||
-      (tradeOptionType === 'PE' &&
+      (type === 'PE' &&
         (Number(item.last_traded_price) >=
           matched_strategy.previous_candle_high ||
           Number(item.last_traded_price) >=
