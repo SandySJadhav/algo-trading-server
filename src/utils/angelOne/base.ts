@@ -581,7 +581,7 @@ class Angel {
       // check for target, increase the sl
       if (
         type === 'CE' &&
-        ltp >
+        ltp >=
           matched_strategy.entry_price + matched_strategy.trailing_sl_points &&
         ltp > matched_strategy.trailed_sl + matched_strategy.trailing_sl_points
       ) {
@@ -589,7 +589,7 @@ class Angel {
           ltp - matched_strategy.trailing_sl_points;
       } else if (
         type === 'PE' &&
-        ltp <
+        ltp <=
           matched_strategy.entry_price - matched_strategy.trailing_sl_points &&
         ltp < matched_strategy.trailed_sl - matched_strategy.trailing_sl_points
       ) {
