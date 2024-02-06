@@ -46,4 +46,18 @@ const AngelLogin = async () => {
   }
 };
 
+export const forceKillOrders = () => {
+  if (angelInstance) {
+    console.log('🚀 Initiated Gracefully shutdown');
+    angelInstance.ACTIVE_STRATEGIES?.forEach((strategy, index) => {
+      if (angelInstance && strategy.order_status === 'PLACED') {
+        console.log(`🚀 Force exit order ${strategy.id}`, commonPrint());
+        // force exit order as server is restarting
+        angelInstance.exitOrder(index);
+      }
+    });
+    angelInstance.cleanup();
+  }
+};
+
 export default AngelLogin;

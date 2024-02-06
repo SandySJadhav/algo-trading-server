@@ -432,6 +432,24 @@ class Angel {
     }
   }
 
+  restOrderStatus(order_status: string, id: string) {
+    if (order_status === 'FAILED') {
+      console.log(`🚀 Orders failed for strategy ${id} `, commonPrint());
+      return;
+    } else if (order_status === 'COMPLETED') {
+      return;
+    } else if (order_status === 'STRIKE_SELECTION') {
+      console.log(`🔥 Order stuck in strike price selection -> ${id}`);
+      return;
+    } else {
+      console.log(
+        `🚀 Strategy: ${id}, Operation in progress -> ${order_status} `,
+        commonPrint()
+      );
+      return;
+    }
+  }
+
   handleExecution(item: ltp_prop, matched_index: number) {
     const matched_strategy = this.ACTIVE_STRATEGIES[matched_index];
     const {
@@ -445,23 +463,12 @@ class Angel {
       instrument_to_watch
     } = matched_strategy;
 
-    if (order_status !== 'IDLE') {
-      if (order_status === 'PLACED') {
-        // placed order, waiting for exit trigger
-        this.handleExitStrategy(item, matched_index);
-        return;
-      } else if (order_status === 'FAILED') {
-        console.log(`🚀 Orders failed for strategy ${id} `, commonPrint());
-        return;
-      } else if (order_status === 'COMPLETED') {
-        return;
-      } else {
-        console.log(
-          `🚀 Strategy: ${id}, Operation in progress -> ${order_status} `,
-          commonPrint()
-        );
-        return;
-      }
+    if (order_status === 'PLACED') {
+      // placed order, waiting for exit trigger
+      this.handleExitStrategy(item, matched_index);
+      return;
+    } else if (order_status !== 'IDLE') {
+      this.restOrderStatus(order_status, id);
     } else if (!call_instrument_to_trade || !put_instrument_to_trade) {
       console.log('🚀 Searching for call & put instruments ', commonPrint());
       this.ACTIVE_STRATEGIES[matched_index].order_status = 'STRIKE_SELECTION';
@@ -483,6 +490,77 @@ class Angel {
     }
   }
 
+  async exitOrder(matched_index: number) {
+    const matched_strategy = this.ACTIVE_STRATEGIES[matched_index];
+    const tradeOptionType = this.ACTIVE_STRATEGIES[matched_index]
+      .call_instrument_to_trade
+      ? 'CE'
+      : 'PE';
+    const instrument_to_trade =
+      tradeOptionType === 'CE'
+        ? matched_strategy.call_instrument_to_trade
+        : matched_strategy.put_instrument_to_trade;
+
+    if (tradeOptionType === 'CE') {
+      this.ACTIVE_STRATEGIES[matched_index].profit_points =
+        matched_strategy.exit_price - matched_strategy.entry_price - 2;
+    } else {
+      this.ACTIVE_STRATEGIES[matched_index].profit_points =
+        matched_strategy.entry_price - matched_strategy.exit_price - 2;
+    }
+
+    const order = await placeOrder(
+      {
+        duration: 'DAY',
+        exchange: instrument_to_trade?.exch_seg + '',
+        ordertype: 'MARKET',
+        producttype: 'CARRYFORWARD',
+        quantity: instrument_to_trade?.lotsize,
+        variety: 'NORMAL',
+        transactiontype: 'SELL',
+        symboltoken: instrument_to_trade?.token,
+        tradingsymbol: instrument_to_trade?.symbol + ''
+      },
+      this.headers,
+      {
+        ...this.ACTIVE_STRATEGIES[matched_index],
+        order_status: 'COMPLETED'
+      }
+    );
+    if (order.status) {
+      this.ACTIVE_STRATEGIES[matched_index].order_status = 'COMPLETED';
+      console.log(
+        `🚀 Trade completed for ${matched_strategy.id}`,
+        commonPrint()
+      );
+      // unsubscribe from websocket listenings
+      const payload: {
+        action: number;
+        params: {
+          mode: number;
+          tokenList: any[];
+        };
+      } = {
+        action: ACTION.Unsubscribe,
+        params: {
+          mode: MODE.LTP,
+          tokenList: [
+            {
+              exchangeType: EXCHANGES.mcx_fo,
+              tokens: [instrument_to_trade?.token]
+            }
+          ]
+        }
+      };
+      this.WS.send(payload);
+    } else {
+      this.ACTIVE_STRATEGIES[matched_index].order_status = 'FAILED';
+      console.log(
+        `🔥 failed to exit strategy ${matched_strategy.id} ---------------------------------------------------------`
+      );
+    }
+  }
+
   async handleExitStrategy(item: ltp_prop, matched_index: number) {
     const newDate = getISTTime();
     const hours = newDate.hour();
@@ -492,10 +570,6 @@ class Angel {
       .call_instrument_to_trade
       ? 'CE'
       : 'PE';
-    const instrument_to_trade =
-      tradeOptionType === 'CE'
-        ? this.ACTIVE_STRATEGIES[matched_index].call_instrument_to_trade
-        : this.ACTIVE_STRATEGIES[matched_index].put_instrument_to_trade;
 
     if (
       Number(hours + '.' + minutes) <= matched_strategy.stop_entry_after &&
@@ -541,69 +615,48 @@ class Angel {
       );
       // check stoploss
       console.log(`🚀 SL hit for ${matched_strategy.id}`, commonPrint());
+      this.exitOrder(matched_index);
+    }
+  }
 
-      if (tradeOptionType === 'CE') {
-        this.ACTIVE_STRATEGIES[matched_index].profit_points =
-          this.ACTIVE_STRATEGIES[matched_index].exit_price -
-          this.ACTIVE_STRATEGIES[matched_index].entry_price -
-          2;
-      } else {
-        this.ACTIVE_STRATEGIES[matched_index].profit_points =
-          this.ACTIVE_STRATEGIES[matched_index].entry_price -
-          this.ACTIVE_STRATEGIES[matched_index].exit_price -
-          2;
-      }
+  async placeMarketOrder(type: 'CE' | 'PE', matched_index: number) {
+    this.ACTIVE_STRATEGIES[matched_index].entries_taken_today++;
+    this.ACTIVE_STRATEGIES[matched_index].order_status = 'PENDING';
+    console.log(
+      `🚀 ${type} Order placement criteria met for strategy ${this.ACTIVE_STRATEGIES[matched_index].id}`,
+      commonPrint()
+    );
+    const instrument_to_trade =
+      type === 'CE'
+        ? this.ACTIVE_STRATEGIES[matched_index].call_instrument_to_trade
+        : this.ACTIVE_STRATEGIES[matched_index].put_instrument_to_trade;
 
-      const order = await placeOrder(
-        {
-          duration: 'DAY',
-          exchange: instrument_to_trade?.exch_seg + '',
-          ordertype: 'MARKET',
-          producttype: 'CARRYFORWARD',
-          quantity: instrument_to_trade?.lotsize,
-          variety: 'NORMAL',
-          transactiontype: 'SELL',
-          symboltoken: instrument_to_trade?.token,
-          tradingsymbol: instrument_to_trade?.symbol + ''
-        },
-        this.headers,
-        {
-          ...this.ACTIVE_STRATEGIES[matched_index],
-          order_status: 'COMPLETED'
-        }
-      );
-      if (order.status) {
-        this.ACTIVE_STRATEGIES[matched_index].order_status = 'COMPLETED';
-        console.log(
-          `🚀 Trade completed for ${matched_strategy.id}`,
-          commonPrint()
-        );
-        // unsubscribe from websocket listenings
-        const payload: {
-          action: number;
-          params: {
-            mode: number;
-            tokenList: any[];
-          };
-        } = {
-          action: ACTION.Unsubscribe,
-          params: {
-            mode: MODE.LTP,
-            tokenList: [
-              {
-                exchangeType: EXCHANGES.mcx_fo,
-                tokens: [instrument_to_trade?.token]
-              }
-            ]
-          }
-        };
-        this.WS.send(payload);
+    const order = await placeOrder(
+      {
+        duration: 'DAY',
+        exchange: instrument_to_trade?.exch_seg + '',
+        ordertype: 'MARKET',
+        producttype: 'CARRYFORWARD',
+        quantity: instrument_to_trade?.lotsize,
+        variety: 'NORMAL',
+        transactiontype: 'BUY',
+        symboltoken: instrument_to_trade?.token,
+        tradingsymbol: instrument_to_trade?.symbol + ''
+      },
+      this.headers,
+      { ...this.ACTIVE_STRATEGIES[matched_index], order_status: 'PLACED' }
+    );
+    if (order.status) {
+      this.ACTIVE_STRATEGIES[matched_index].order_status = 'PLACED';
+      this.ACTIVE_STRATEGIES[matched_index].trade_type = type;
+      if (type === 'CE') {
+        delete this.ACTIVE_STRATEGIES[matched_index].put_instrument_to_trade;
       } else {
-        this.ACTIVE_STRATEGIES[matched_index].order_status = 'FAILED';
-        console.log(
-          `🔥 failed to exit strategy ${matched_strategy.id} ---------------------------------------------------------`
-        );
+        delete this.ACTIVE_STRATEGIES[matched_index].call_instrument_to_trade;
       }
+    } else {
+      this.ACTIVE_STRATEGIES[matched_index].order_status = 'FAILED';
+      this.ACTIVE_STRATEGIES[matched_index].entries_taken_today--;
     }
   }
 
@@ -611,7 +664,7 @@ class Angel {
     const newDate = getISTTime();
     const hours = newDate.hour();
     const minutes = newDate.minute();
-
+    // pattern here for data field -  [timestamp, open, high, low, close, volume]
     const matched_strategy = this.ACTIVE_STRATEGIES[matched_index];
     if (
       Number(hours + '.' + minutes) >= matched_strategy.start_entry_after &&
@@ -637,94 +690,25 @@ class Angel {
         this.ACTIVE_STRATEGIES[matched_index].previous_candle_high +
           matched_strategy.buffer_points
       ) {
-        // pattern here for data field -  [timestamp, open, high, low, close, volume]
-        // buy CE here
-        this.ACTIVE_STRATEGIES[matched_index].entries_taken_today++;
-        this.ACTIVE_STRATEGIES[matched_index].order_status = 'PENDING';
         this.ACTIVE_STRATEGIES[matched_index].entry_price = Number(
           item.last_traded_price
         );
-        console.log(
-          `🚀 CE Order placement criteria met for strategy ${this.ACTIVE_STRATEGIES[matched_index].id}`,
-          commonPrint()
-        );
-        const order = await placeOrder(
-          {
-            duration: 'DAY',
-            exchange:
-              this.ACTIVE_STRATEGIES[matched_index].call_instrument_to_trade
-                ?.exch_seg + '',
-            ordertype: 'MARKET',
-            producttype: 'CARRYFORWARD',
-            quantity:
-              this.ACTIVE_STRATEGIES[matched_index].call_instrument_to_trade
-                ?.lotsize,
-            variety: 'NORMAL',
-            transactiontype: 'BUY',
-            symboltoken:
-              this.ACTIVE_STRATEGIES[matched_index].call_instrument_to_trade
-                ?.token,
-            tradingsymbol:
-              this.ACTIVE_STRATEGIES[matched_index].call_instrument_to_trade
-                ?.symbol + ''
-          },
-          this.headers,
-          { ...this.ACTIVE_STRATEGIES[matched_index], order_status: 'PLACED' }
-        );
-        if (order.status) {
-          this.ACTIVE_STRATEGIES[matched_index].order_status = 'PLACED';
-          delete this.ACTIVE_STRATEGIES[matched_index].put_instrument_to_trade;
-        } else {
-          this.ACTIVE_STRATEGIES[matched_index].order_status = 'FAILED';
-          this.ACTIVE_STRATEGIES[matched_index].entries_taken_today--;
-        }
+        this.placeMarketOrder('CE', matched_index);
       } else if (
         Number(item.last_traded_price) <=
         this.ACTIVE_STRATEGIES[matched_index].previous_candle_low -
           matched_strategy.buffer_points
       ) {
-        // pattern here for data field -  [timestamp, open, high, low, close, volume]
-        // buy PE here
-        this.ACTIVE_STRATEGIES[matched_index].entries_taken_today++;
-        this.ACTIVE_STRATEGIES[matched_index].order_status = 'PENDING';
         this.ACTIVE_STRATEGIES[matched_index].entry_price = Number(
           item.last_traded_price
         );
-        console.log(
-          `🚀 PE Order placement criteria met for strategy ${this.ACTIVE_STRATEGIES[matched_index].id}`,
-          commonPrint()
-        );
-        const order = await placeOrder(
-          {
-            duration: 'DAY',
-            exchange:
-              this.ACTIVE_STRATEGIES[matched_index].put_instrument_to_trade
-                ?.exch_seg + '',
-            ordertype: 'MARKET',
-            producttype: 'CARRYFORWARD',
-            quantity:
-              this.ACTIVE_STRATEGIES[matched_index].put_instrument_to_trade
-                ?.lotsize,
-            variety: 'NORMAL',
-            transactiontype: 'BUY',
-            symboltoken:
-              this.ACTIVE_STRATEGIES[matched_index].put_instrument_to_trade
-                ?.token,
-            tradingsymbol:
-              this.ACTIVE_STRATEGIES[matched_index].put_instrument_to_trade
-                ?.symbol + ''
-          },
-          this.headers,
-          { ...this.ACTIVE_STRATEGIES[matched_index], order_status: 'PLACED' }
-        );
-        if (order.status) {
-          this.ACTIVE_STRATEGIES[matched_index].order_status = 'PLACED';
-          delete this.ACTIVE_STRATEGIES[matched_index].call_instrument_to_trade;
-        } else {
-          this.ACTIVE_STRATEGIES[matched_index].order_status = 'FAILED';
-          this.ACTIVE_STRATEGIES[matched_index].entries_taken_today--;
-        }
+        this.placeMarketOrder('PE', matched_index);
       }
+    } else {
+      console.log(
+        `🚀 Timeline not matching to take a trade for strategy ${matched_strategy.id}`,
+        commonPrint()
+      );
     }
   }
 
