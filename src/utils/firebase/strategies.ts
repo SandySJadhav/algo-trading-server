@@ -37,6 +37,7 @@ export const cleanAllStrategies = async () => {
       ...resData,
       entries_taken_today: 0,
       order_status: 'IDLE',
+      trade_type: '',
       entry_price: 0,
       exit_price: 0,
       profit_points: 0

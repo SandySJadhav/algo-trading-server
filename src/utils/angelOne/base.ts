@@ -617,6 +617,8 @@ class Angel {
   async placeMarketOrder(type: 'CE' | 'PE', matched_index: number) {
     this.ACTIVE_STRATEGIES[matched_index].entries_taken_today++;
     this.ACTIVE_STRATEGIES[matched_index].order_status = 'PENDING';
+    this.ACTIVE_STRATEGIES[matched_index].trade_type = type;
+
     console.log(
       `🚀 ${type} Order placement criteria met for strategy ${this.ACTIVE_STRATEGIES[matched_index].id}`,
       commonPrint()
@@ -643,7 +645,6 @@ class Angel {
     );
     if (order.status) {
       this.ACTIVE_STRATEGIES[matched_index].order_status = 'PLACED';
-      this.ACTIVE_STRATEGIES[matched_index].trade_type = type;
       if (type === 'CE') {
         delete this.ACTIVE_STRATEGIES[matched_index].put_instrument_to_trade;
       } else {
