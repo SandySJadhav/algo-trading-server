@@ -470,6 +470,7 @@ class Angel {
       return;
     } else if (order_status !== 'IDLE') {
       this.restOrderStatus(order_status, id);
+      return;
     } else if (!call_instrument_to_trade || !put_instrument_to_trade) {
       console.log('🚀 Searching for call & put instruments ', commonPrint());
       this.ACTIVE_STRATEGIES[matched_index].order_status = 'STRIKE_SELECTION';
