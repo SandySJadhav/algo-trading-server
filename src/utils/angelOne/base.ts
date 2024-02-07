@@ -484,6 +484,7 @@ class Angel {
       ) {
         this.handleCrossing(item, matched_index);
       } else {
+        this.ACTIVE_STRATEGIES.splice(matched_index, 1);
         console.log(
           '🔥 Handle for this type of execution is not written!!! ',
           commonPrint()
