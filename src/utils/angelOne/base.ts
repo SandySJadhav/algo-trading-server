@@ -470,6 +470,7 @@ class Angel {
       return;
     } else if (order_status !== 'IDLE') {
       this.restOrderStatus(order_status, id);
+      return;
     } else if (!call_instrument_to_trade || !put_instrument_to_trade) {
       console.log('🚀 Searching for call & put instruments ', commonPrint());
       this.ACTIVE_STRATEGIES[matched_index].order_status = 'STRIKE_SELECTION';
@@ -483,6 +484,7 @@ class Angel {
       ) {
         this.handleCrossing(item, matched_index);
       } else {
+        this.ACTIVE_STRATEGIES.splice(matched_index, 1);
         console.log(
           '🔥 Handle for this type of execution is not written!!! ',
           commonPrint()
@@ -507,6 +509,7 @@ class Angel {
       this.ACTIVE_STRATEGIES[matched_index].profit_points =
         matched_strategy.entry_price - matched_strategy.exit_price - 2;
     }
+    this.ACTIVE_STRATEGIES[matched_index].order_status = 'COMPLETED';
 
     const order = await placeOrder(
       {
@@ -521,13 +524,10 @@ class Angel {
         tradingsymbol: instrument_to_trade?.symbol + ''
       },
       this.headers,
-      {
-        ...this.ACTIVE_STRATEGIES[matched_index],
-        order_status: 'COMPLETED'
-      }
+      this.ACTIVE_STRATEGIES[matched_index]
     );
+    this.ACTIVE_STRATEGIES.splice(matched_index, 1);
     if (order.status) {
-      this.ACTIVE_STRATEGIES[matched_index].order_status = 'COMPLETED';
       console.log(
         `🚀 Trade completed for ${matched_strategy.id}`,
         commonPrint()
@@ -553,10 +553,7 @@ class Angel {
       };
       this.WS.send(payload);
     } else {
-      this.ACTIVE_STRATEGIES[matched_index].order_status = 'FAILED';
-      console.log(
-        `🔥 failed to exit strategy ${matched_strategy.id} ---------------------------------------------------------`
-      );
+      console.log(`🔥 failed to exit strategy ${matched_strategy.id}`);
     }
   }
 
@@ -614,6 +611,8 @@ class Angel {
         ? this.ACTIVE_STRATEGIES[matched_index].call_instrument_to_trade
         : this.ACTIVE_STRATEGIES[matched_index].put_instrument_to_trade;
 
+    this.ACTIVE_STRATEGIES[matched_index].order_status = 'PLACED';
+
     const order = await placeOrder(
       {
         duration: 'DAY',
@@ -627,10 +626,9 @@ class Angel {
         tradingsymbol: instrument_to_trade?.symbol + ''
       },
       this.headers,
-      { ...this.ACTIVE_STRATEGIES[matched_index], order_status: 'PLACED' }
+      this.ACTIVE_STRATEGIES[matched_index]
     );
     if (order.status) {
-      this.ACTIVE_STRATEGIES[matched_index].order_status = 'PLACED';
       if (type === 'CE') {
         delete this.ACTIVE_STRATEGIES[matched_index].put_instrument_to_trade;
       } else {
@@ -638,7 +636,6 @@ class Angel {
       }
     } else {
       this.ACTIVE_STRATEGIES[matched_index].order_status = 'FAILED';
-      this.ACTIVE_STRATEGIES[matched_index].entries_taken_today--;
     }
   }
 
@@ -689,9 +686,10 @@ class Angel {
       }
     } else {
       console.log(
-        `🚀 Timeline not matching to take a trade for strategy ${matched_strategy.id}`,
+        `🚀 Timeline not matching for strategy ${matched_strategy.id}, so removing it from active strategies`,
         commonPrint()
       );
+      this.ACTIVE_STRATEGIES.splice(matched_index, 1);
     }
   }
 

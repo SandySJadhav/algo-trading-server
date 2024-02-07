@@ -49,9 +49,17 @@ export const placeOrder = async (
       ...data,
       ...response.data
     };
+    updateOrderStatus(matched_strategy, data);
   } else {
     data.errorcode = response.errorcode;
+    updateOrderStatus(
+      {
+        ...matched_strategy,
+        order_status: 'FAILED'
+      },
+      data
+    );
   }
-  updateOrderStatus(matched_strategy, data);
+
   return response;
 };
