@@ -685,9 +685,10 @@ class Angel {
       }
     } else {
       console.log(
-        `🚀 Timeline not matching to take a trade for strategy ${matched_strategy.id}`,
+        `🚀 Timeline not matching for strategy ${matched_strategy.id}, so removing it from active strategies`,
         commonPrint()
       );
+      this.ACTIVE_STRATEGIES.splice(matched_index, 1);
     }
   }
 
