@@ -671,7 +671,7 @@ class Angel {
           matched_strategy.buffer_points
       ) {
         this.ACTIVE_STRATEGIES[matched_index].trailed_sl =
-          this.ACTIVE_STRATEGIES[matched_index].previous_candle_low;
+          this.ACTIVE_STRATEGIES[matched_index].previous_candle_low - 5;
         this.ACTIVE_STRATEGIES[matched_index].entry_price = ltp;
         this.placeMarketOrder('CE', matched_index);
       } else if (
@@ -680,7 +680,7 @@ class Angel {
           matched_strategy.buffer_points
       ) {
         this.ACTIVE_STRATEGIES[matched_index].trailed_sl =
-          this.ACTIVE_STRATEGIES[matched_index].previous_candle_high;
+          this.ACTIVE_STRATEGIES[matched_index].previous_candle_high + 5;
         this.ACTIVE_STRATEGIES[matched_index].entry_price = ltp;
         this.placeMarketOrder('PE', matched_index);
       }
