@@ -355,7 +355,7 @@ export const startCronerToSyncInstruments = () => {
    */
 
   // At 05:00 on every day-of-week from Monday through Friday.
-  const instrumentSyncCroner = Cron('0 0 5 * * 1-5', async () => {
+  Cron('0 0 5 * * 1-5', async () => {
     console.log(
       '🚀 Starting data sync with Angel and 🔥 store ',
       commonPrint()
@@ -363,7 +363,4 @@ export const startCronerToSyncInstruments = () => {
     cleanAllStrategies();
     initiateDataSync();
   });
-  if (process.env.ENVIRONMENT !== 'dev') {
-    instrumentSyncCroner.trigger();
-  }
 };
