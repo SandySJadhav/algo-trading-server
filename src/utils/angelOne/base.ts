@@ -580,24 +580,24 @@ class Angel {
         type === 'CE' &&
         ltp >=
           matched_strategy.entry_price + matched_strategy.trailing_sl_points &&
-        ltp > matched_strategy.trailed_sl + matched_strategy.trailing_sl_points
+        ltp - matched_strategy.trailing_sl_points > matched_strategy.trailed_sl
       ) {
         this.ACTIVE_STRATEGIES[matched_index].trailed_sl =
           ltp - matched_strategy.trailing_sl_points;
         console.log(
-          `🚀 Trailing sl for ${matched_strategy.id} -> LTP: ${ltp}, New SL: ${this.ACTIVE_STRATEGIES[matched_index].trailed_sl} `,
+          `🚀 Trailing sl for ${matched_strategy.id} -> LTP: ${ltp}, Old SL: ${matched_strategy.trailed_sl}, New SL: ${this.ACTIVE_STRATEGIES[matched_index].trailed_sl} `,
           commonPrint()
         );
       } else if (
         type === 'PE' &&
         ltp <=
           matched_strategy.entry_price - matched_strategy.trailing_sl_points &&
-        ltp < matched_strategy.trailed_sl - matched_strategy.trailing_sl_points
+        ltp + matched_strategy.trailing_sl_points < matched_strategy.trailed_sl
       ) {
         this.ACTIVE_STRATEGIES[matched_index].trailed_sl =
           ltp + matched_strategy.trailing_sl_points;
         console.log(
-          `🚀 Trailing sl for ${matched_strategy.id} -> LTP: ${ltp}, New SL: ${this.ACTIVE_STRATEGIES[matched_index].trailed_sl} `,
+          `🚀 Trailing sl for ${matched_strategy.id} -> LTP: ${ltp}, Old SL: ${matched_strategy.trailed_sl}, New SL: ${this.ACTIVE_STRATEGIES[matched_index].trailed_sl} `,
           commonPrint()
         );
       } else {
