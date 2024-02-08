@@ -572,7 +572,7 @@ class Angel {
     ) {
       this.ACTIVE_STRATEGIES[matched_index].exit_price = ltp;
       // check stoploss
-      console.log(`🚀 SL hit for ${matched_strategy.id}`, commonPrint());
+      console.log(`🚀 SL hit for ${matched_strategy.id} `, commonPrint());
       this.exitOrder(matched_index);
     } else {
       // check for target, increase the sl
@@ -584,6 +584,10 @@ class Angel {
       ) {
         this.ACTIVE_STRATEGIES[matched_index].trailed_sl =
           ltp - matched_strategy.trailing_sl_points;
+        console.log(
+          `🚀 Trailing sl for ${matched_strategy.id} -> LTP: ${ltp}, New SL: ${this.ACTIVE_STRATEGIES[matched_index].trailed_sl} `,
+          commonPrint()
+        );
       } else if (
         type === 'PE' &&
         ltp <=
@@ -592,8 +596,16 @@ class Angel {
       ) {
         this.ACTIVE_STRATEGIES[matched_index].trailed_sl =
           ltp + matched_strategy.trailing_sl_points;
+        console.log(
+          `🚀 Trailing sl for ${matched_strategy.id} -> LTP: ${ltp}, New SL: ${this.ACTIVE_STRATEGIES[matched_index].trailed_sl} `,
+          commonPrint()
+        );
+      } else {
+        console.log(
+          `🚀 Strategy ${matched_strategy.id} -> LTP: ${ltp}, SL: ${this.ACTIVE_STRATEGIES[matched_index].trailed_sl} `,
+          commonPrint()
+        );
       }
-      console.log(`🚀 Trailing sl for ${matched_strategy.id}`, commonPrint());
     }
   }
 
