@@ -551,7 +551,7 @@ class Angel {
           ]
         }
       };
-      this.WS.send(payload);
+      this.WS.send(JSON.stringify(payload));
     } else {
       console.log(`🔥 failed to exit strategy ${matched_strategy.id}`);
     }
