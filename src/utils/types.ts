@@ -31,7 +31,6 @@ export interface strategy_prop {
   status: string;
   instrument_to_watch: instrument_prop;
   trailing_sl_points: number;
-  data: any;
   market_status?: 'OPEN' | 'CLOSED';
   order_status:
     | 'IDLE'
@@ -43,15 +42,20 @@ export interface strategy_prop {
     | 'RESET';
   call_instrument_to_trade?: instrument_prop;
   put_instrument_to_trade?: instrument_prop;
+  lots: number;
+
+  // these are local variables, no need to sync with firestore
+  data: any;
   entry_price: number;
   exit_price: number;
   profit_points: number;
   previous_candle_low: number;
   previous_candle_high: number;
-  lots: number;
   trailed_sl: number;
   trade_type: 'CE' | 'PE';
   target: number;
+  target_difference_points: number;
+  achieved_target: number;
 }
 
 export interface ltp_prop {
