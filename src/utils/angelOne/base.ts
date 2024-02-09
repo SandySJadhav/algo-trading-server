@@ -688,18 +688,34 @@ class Angel {
         this.ACTIVE_STRATEGIES[matched_index].previous_candle_high +
           matched_strategy.buffer_points
       ) {
+        // setup SL
         this.ACTIVE_STRATEGIES[matched_index].trailed_sl =
-          this.ACTIVE_STRATEGIES[matched_index].previous_candle_low - 5;
+          this.ACTIVE_STRATEGIES[matched_index].previous_candle_low - 1;
+        // record entry price
         this.ACTIVE_STRATEGIES[matched_index].entry_price = ltp;
+        // setup target 1;
+        this.ACTIVE_STRATEGIES[matched_index].target =
+          this.ACTIVE_STRATEGIES[matched_index].entry_price +
+          (this.ACTIVE_STRATEGIES[matched_index].entry_price -
+            this.ACTIVE_STRATEGIES[matched_index].trailed_sl);
+        // place order
         this.placeMarketOrder('CE', matched_index);
       } else if (
         ltp <=
         this.ACTIVE_STRATEGIES[matched_index].previous_candle_low -
           matched_strategy.buffer_points
       ) {
+        // setup SL
         this.ACTIVE_STRATEGIES[matched_index].trailed_sl =
-          this.ACTIVE_STRATEGIES[matched_index].previous_candle_high + 5;
+          this.ACTIVE_STRATEGIES[matched_index].previous_candle_high + 1;
+        // setup entry price
         this.ACTIVE_STRATEGIES[matched_index].entry_price = ltp;
+        // setup target 1;
+        this.ACTIVE_STRATEGIES[matched_index].target =
+          this.ACTIVE_STRATEGIES[matched_index].entry_price -
+          (this.ACTIVE_STRATEGIES[matched_index].trailed_sl -
+            this.ACTIVE_STRATEGIES[matched_index].entry_price);
+        // place order
         this.placeMarketOrder('PE', matched_index);
       }
     } else {
