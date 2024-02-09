@@ -579,7 +579,8 @@ class Angel {
       if (
         type === 'CE' &&
         ltp >=
-          matched_strategy.entry_price + matched_strategy.trailing_sl_points &&
+          matched_strategy.entry_price +
+            matched_strategy.trailing_sl_points * 2 &&
         ltp - matched_strategy.trailing_sl_points > matched_strategy.trailed_sl
       ) {
         this.ACTIVE_STRATEGIES[matched_index].trailed_sl =
@@ -591,7 +592,8 @@ class Angel {
       } else if (
         type === 'PE' &&
         ltp <=
-          matched_strategy.entry_price - matched_strategy.trailing_sl_points &&
+          matched_strategy.entry_price -
+            matched_strategy.trailing_sl_points * 2 &&
         ltp + matched_strategy.trailing_sl_points < matched_strategy.trailed_sl
       ) {
         this.ACTIVE_STRATEGIES[matched_index].trailed_sl =
