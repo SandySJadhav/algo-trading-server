@@ -517,7 +517,10 @@ class Angel {
         exchange: instrument_to_trade?.exch_seg + '',
         ordertype: 'MARKET',
         producttype: 'CARRYFORWARD',
-        quantity: instrument_to_trade?.lotsize,
+        quantity:
+          Number(instrument_to_trade?.lotsize || 1) *
+            this.ACTIVE_STRATEGIES[matched_index].lots +
+          '',
         variety: 'NORMAL',
         transactiontype: 'SELL',
         symboltoken: instrument_to_trade?.token,
@@ -576,35 +579,76 @@ class Angel {
       this.exitOrder(matched_index);
     } else {
       // check for target, increase the sl
-      if (
-        type === 'CE' &&
-        ltp >=
-          matched_strategy.entry_price + matched_strategy.trailing_sl_points &&
-        ltp - matched_strategy.trailing_sl_points > matched_strategy.trailed_sl
-      ) {
-        this.ACTIVE_STRATEGIES[matched_index].trailed_sl =
-          ltp - matched_strategy.trailing_sl_points;
-        console.log(
-          `🚀 Trailing sl for ${matched_strategy.id} -> LTP: ${ltp}, Old SL: ${matched_strategy.trailed_sl}, New SL: ${this.ACTIVE_STRATEGIES[matched_index].trailed_sl} `,
-          commonPrint()
-        );
-      } else if (
-        type === 'PE' &&
-        ltp <=
-          matched_strategy.entry_price - matched_strategy.trailing_sl_points &&
-        ltp + matched_strategy.trailing_sl_points < matched_strategy.trailed_sl
-      ) {
-        this.ACTIVE_STRATEGIES[matched_index].trailed_sl =
-          ltp + matched_strategy.trailing_sl_points;
-        console.log(
-          `🚀 Trailing sl for ${matched_strategy.id} -> LTP: ${ltp}, Old SL: ${matched_strategy.trailed_sl}, New SL: ${this.ACTIVE_STRATEGIES[matched_index].trailed_sl} `,
-          commonPrint()
-        );
-      } else {
-        console.log(
-          `🚀 Strategy ${matched_strategy.id} -> LTP: ${ltp}, SL: ${this.ACTIVE_STRATEGIES[matched_index].trailed_sl} `,
-          commonPrint()
-        );
+      if (type === 'CE') {
+        if (ltp >= matched_strategy.target) {
+          // set next target
+          this.ACTIVE_STRATEGIES[matched_index].target =
+            ltp + matched_strategy.target_difference_points;
+          // trail SL
+          this.ACTIVE_STRATEGIES[matched_index].trailed_sl =
+            ltp - matched_strategy.trailing_sl_points;
+          // set target achieved
+          this.ACTIVE_STRATEGIES[matched_index].achieved_target = ltp;
+          console.log(
+            `🚀 Trailing sl for ${matched_strategy.id} -> Trade: ${type}, Target achieved: ${ltp}, Old SL: ${matched_strategy.trailed_sl}, New SL: ${this.ACTIVE_STRATEGIES[matched_index].trailed_sl} `,
+            commonPrint()
+          );
+        } else if (
+          matched_strategy.achieved_target &&
+          ltp >=
+            matched_strategy.achieved_target +
+              matched_strategy.trailing_sl_points &&
+          matched_strategy.trailed_sl !== matched_strategy.achieved_target
+        ) {
+          // trail SL to previous target
+          this.ACTIVE_STRATEGIES[matched_index].trailed_sl =
+            matched_strategy.achieved_target;
+          console.log(
+            `🚀 Trailing sl for ${matched_strategy.id} -> Trade: ${type}, LTP: ${ltp}, Old SL: ${matched_strategy.trailed_sl}, New SL: ${this.ACTIVE_STRATEGIES[matched_index].trailed_sl} `,
+            commonPrint()
+          );
+        } else {
+          console.log(
+            `🚀 Strategy ${matched_strategy.id} -> Trade: ${type}, LTP: ${ltp}, SL: ${this.ACTIVE_STRATEGIES[matched_index].trailed_sl} `,
+            commonPrint()
+          );
+        }
+      } else if (type === 'PE') {
+        if (ltp <= matched_strategy.target) {
+          // set next target
+          this.ACTIVE_STRATEGIES[matched_index].target =
+            ltp - matched_strategy.target_difference_points;
+
+          // trail SL
+          this.ACTIVE_STRATEGIES[matched_index].trailed_sl =
+            ltp + matched_strategy.trailing_sl_points;
+
+          // set target achieved
+          this.ACTIVE_STRATEGIES[matched_index].achieved_target = ltp;
+          console.log(
+            `🚀 Trailing sl for ${matched_strategy.id} -> Trade: ${type}, Target achieved: ${ltp}, Old SL: ${matched_strategy.trailed_sl}, New SL: ${this.ACTIVE_STRATEGIES[matched_index].trailed_sl} `,
+            commonPrint()
+          );
+        } else if (
+          matched_strategy.achieved_target &&
+          ltp <=
+            matched_strategy.achieved_target -
+              matched_strategy.trailing_sl_points &&
+          matched_strategy.trailed_sl !== matched_strategy.achieved_target
+        ) {
+          // trail SL to previous target
+          this.ACTIVE_STRATEGIES[matched_index].trailed_sl =
+            matched_strategy.achieved_target;
+          console.log(
+            `🚀 Trailing sl for ${matched_strategy.id} -> Trade: ${type}, LTP: ${ltp}, Old SL: ${matched_strategy.trailed_sl}, New SL: ${this.ACTIVE_STRATEGIES[matched_index].trailed_sl} `,
+            commonPrint()
+          );
+        } else {
+          console.log(
+            `🚀 Strategy ${matched_strategy.id} -> Trade: ${type}, LTP: ${ltp}, SL: ${this.ACTIVE_STRATEGIES[matched_index].trailed_sl} `,
+            commonPrint()
+          );
+        }
       }
     }
   }
@@ -631,7 +675,10 @@ class Angel {
         exchange: instrument_to_trade?.exch_seg + '',
         ordertype: 'MARKET',
         producttype: 'CARRYFORWARD',
-        quantity: instrument_to_trade?.lotsize,
+        quantity:
+          Number(instrument_to_trade?.lotsize || 1) *
+            this.ACTIVE_STRATEGIES[matched_index].lots +
+          '',
         variety: 'NORMAL',
         transactiontype: 'BUY',
         symboltoken: instrument_to_trade?.token,
@@ -668,13 +715,13 @@ class Angel {
         this.getPreviousCandleLow(matched_strategy.data);
       // we can take entry here
       console.log(
-        `🚀 Waiting for entry -> LTP: ${ltp}, >= ${
+        `🚀 Waiting for entry -> LTP: ${ltp}, Range [${
           this.ACTIVE_STRATEGIES[matched_index].previous_candle_high +
           matched_strategy.buffer_points
-        } or <= ${
+        }:${
           this.ACTIVE_STRATEGIES[matched_index].previous_candle_low -
           matched_strategy.buffer_points
-        }`,
+        }]`,
         commonPrint()
       );
       if (
@@ -682,18 +729,40 @@ class Angel {
         this.ACTIVE_STRATEGIES[matched_index].previous_candle_high +
           matched_strategy.buffer_points
       ) {
+        // setup SL
         this.ACTIVE_STRATEGIES[matched_index].trailed_sl =
-          this.ACTIVE_STRATEGIES[matched_index].previous_candle_low - 5;
+          this.ACTIVE_STRATEGIES[matched_index].previous_candle_low - 1;
+        // record entry price
         this.ACTIVE_STRATEGIES[matched_index].entry_price = ltp;
+        // capture target price difference
+        this.ACTIVE_STRATEGIES[matched_index].target_difference_points =
+          this.ACTIVE_STRATEGIES[matched_index].entry_price -
+          this.ACTIVE_STRATEGIES[matched_index].trailed_sl;
+        // setup target 1;
+        this.ACTIVE_STRATEGIES[matched_index].target =
+          this.ACTIVE_STRATEGIES[matched_index].entry_price +
+          this.ACTIVE_STRATEGIES[matched_index].target_difference_points;
+        // place order
         this.placeMarketOrder('CE', matched_index);
       } else if (
         ltp <=
         this.ACTIVE_STRATEGIES[matched_index].previous_candle_low -
           matched_strategy.buffer_points
       ) {
+        // setup SL
         this.ACTIVE_STRATEGIES[matched_index].trailed_sl =
-          this.ACTIVE_STRATEGIES[matched_index].previous_candle_high + 5;
+          this.ACTIVE_STRATEGIES[matched_index].previous_candle_high + 1;
+        // setup entry price
         this.ACTIVE_STRATEGIES[matched_index].entry_price = ltp;
+        // setup target price difference
+        this.ACTIVE_STRATEGIES[matched_index].target_difference_points =
+          this.ACTIVE_STRATEGIES[matched_index].trailed_sl -
+          this.ACTIVE_STRATEGIES[matched_index].entry_price;
+        // setup target 1;
+        this.ACTIVE_STRATEGIES[matched_index].target =
+          this.ACTIVE_STRATEGIES[matched_index].entry_price -
+          this.ACTIVE_STRATEGIES[matched_index].target_difference_points;
+        // place order
         this.placeMarketOrder('PE', matched_index);
       }
     } else {

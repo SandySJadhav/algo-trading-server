@@ -13,13 +13,18 @@ export const updateOrderStatus = async (
   }: strategy_prop,
   order: any
 ) => {
-  Firebase.db.collection('orders').doc(order.orderid).set(order);
+  Firebase.db
+    .collection('orders')
+    .doc(order.orderid)
+    .set({
+      ...order,
+      profit_points,
+      entry_price,
+      exit_price
+    });
   Firebase.db.collection('strategies').doc(id).update({
     order_status,
-    entries_taken_today,
-    entry_price,
-    exit_price,
-    profit_points
+    entries_taken_today
   });
 };
 
@@ -36,12 +41,7 @@ export const cleanAllStrategies = async () => {
     batch.set(strategies_colllection.doc(res.id), {
       ...resData,
       entries_taken_today: 0,
-      order_status: 'IDLE',
-      trade_type: '',
-      entry_price: 0,
-      exit_price: 0,
-      profit_points: 0,
-      trailed_sl: 0
+      order_status: 'IDLE'
     });
   });
   console.log('🚀 Reset strategies done in 🔥 store ', commonPrint());
