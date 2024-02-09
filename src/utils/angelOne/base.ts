@@ -517,7 +517,10 @@ class Angel {
         exchange: instrument_to_trade?.exch_seg + '',
         ordertype: 'MARKET',
         producttype: 'CARRYFORWARD',
-        quantity: instrument_to_trade?.lotsize,
+        quantity:
+          Number(instrument_to_trade?.lotsize || 1) *
+            this.ACTIVE_STRATEGIES[matched_index].lots +
+          '',
         variety: 'NORMAL',
         transactiontype: 'SELL',
         symboltoken: instrument_to_trade?.token,
@@ -633,7 +636,10 @@ class Angel {
         exchange: instrument_to_trade?.exch_seg + '',
         ordertype: 'MARKET',
         producttype: 'CARRYFORWARD',
-        quantity: instrument_to_trade?.lotsize,
+        quantity:
+          Number(instrument_to_trade?.lotsize || 1) *
+            this.ACTIVE_STRATEGIES[matched_index].lots +
+          '',
         variety: 'NORMAL',
         transactiontype: 'BUY',
         symboltoken: instrument_to_trade?.token,

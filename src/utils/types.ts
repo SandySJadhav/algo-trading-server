@@ -50,6 +50,7 @@ export interface strategy_prop {
   previous_candle_high: number;
   trade_type: 'CE' | 'PE';
   trailed_sl: number;
+  lots: number;
 }
 
 export interface ltp_prop {
