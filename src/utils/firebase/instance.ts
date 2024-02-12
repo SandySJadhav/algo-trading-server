@@ -10,6 +10,7 @@ const app: App = initializeApp({
 // Initialize database & auth
 const auth = getAuth(app);
 const db = getFirestore(app);
+db.settings({ ignoreUndefinedProperties: true });
 const Firebase = { db, auth };
 
 export default Firebase;
