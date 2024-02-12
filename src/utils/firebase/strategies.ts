@@ -13,19 +13,27 @@ export const updateOrderStatus = async (
   }: strategy_prop,
   order: any
 ) => {
-  Firebase.db
-    .collection('orders')
-    .doc(order.orderid)
-    .set({
-      ...order,
-      profit_points,
-      entry_price,
-      exit_price
+  try {
+    Firebase.db
+      .collection('orders')
+      .doc(order.orderid)
+      .set({
+        ...order,
+        profit_points,
+        entry_price,
+        exit_price
+      });
+  } catch (error) {
+    console.error('Failed to update orders database -> ', error);
+  }
+  try {
+    Firebase.db.collection('strategies').doc(id).update({
+      order_status,
+      entries_taken_today
     });
-  Firebase.db.collection('strategies').doc(id).update({
-    order_status,
-    entries_taken_today
-  });
+  } catch (error) {
+    console.error('Failed to update strategies database -> ', error);
+  }
 };
 
 export const cleanAllStrategies = async () => {
