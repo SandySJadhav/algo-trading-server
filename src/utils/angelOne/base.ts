@@ -716,13 +716,16 @@ class Angel {
         matched_strategy.data
       );
       // we can take entry here
+
+      const CEEntry = previousCandleHigh + matched_strategy.buffer_points;
+      const PEEntry = previousCandleLow - matched_strategy.buffer_points;
+
       console.log(
-        `🚀 Waiting for entry -> LTP: ${ltp}, Range [${
-          previousCandleHigh + matched_strategy.buffer_points
-        }:${previousCandleLow - matched_strategy.buffer_points}]`,
+        `🚀 Waiting for entry -> LTP: ${ltp}, Range [${CEEntry}:${PEEntry}]`,
         commonPrint()
       );
-      if (ltp >= previousCandleHigh + matched_strategy.buffer_points) {
+
+      if (ltp >= CEEntry) {
         // record entry price
         this.ACTIVE_STRATEGIES[matched_index].entry_price = ltp;
         // setup SL
@@ -730,13 +733,14 @@ class Angel {
           previousCandleLow - 1;
         // capture target price difference
         this.ACTIVE_STRATEGIES[matched_index].target_difference_points =
-          ltp - previousCandleLow - 1;
+          CEEntry - previousCandleLow - 1;
         // setup target 1;
         this.ACTIVE_STRATEGIES[matched_index].target =
-          ltp + this.ACTIVE_STRATEGIES[matched_index].target_difference_points;
+          CEEntry +
+          this.ACTIVE_STRATEGIES[matched_index].target_difference_points;
         // place order
         return this.placeMarketOrder('CE', matched_index);
-      } else if (ltp <= previousCandleLow - matched_strategy.buffer_points) {
+      } else if (ltp <= PEEntry) {
         // record entry price
         this.ACTIVE_STRATEGIES[matched_index].entry_price = ltp;
         // setup SL
@@ -744,10 +748,11 @@ class Angel {
           previousCandleHigh + 1;
         // capture target price difference
         this.ACTIVE_STRATEGIES[matched_index].target_difference_points =
-          previousCandleHigh + 1 - ltp;
+          previousCandleHigh + 1 - PEEntry;
         // setup target 1;
         this.ACTIVE_STRATEGIES[matched_index].target =
-          ltp - this.ACTIVE_STRATEGIES[matched_index].target_difference_points;
+          PEEntry -
+          this.ACTIVE_STRATEGIES[matched_index].target_difference_points;
         // place order
         return this.placeMarketOrder('PE', matched_index);
       }
