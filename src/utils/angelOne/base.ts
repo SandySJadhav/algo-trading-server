@@ -579,14 +579,16 @@ class Angel {
       // check for target, increase the sl
       if (type === 'CE') {
         if (ltp >= matched_strategy.target) {
+          // set target achieved
+          this.ACTIVE_STRATEGIES[matched_index].achieved_target =
+            this.ACTIVE_STRATEGIES[matched_index].target;
           // set next target
-          this.ACTIVE_STRATEGIES[matched_index].target =
-            ltp + matched_strategy.target_difference_points;
+          this.ACTIVE_STRATEGIES[matched_index].target +=
+            matched_strategy.target_difference_points;
           // trail SL
           this.ACTIVE_STRATEGIES[matched_index].trailed_sl =
-            ltp - matched_strategy.trailing_sl_points;
-          // set target achieved
-          this.ACTIVE_STRATEGIES[matched_index].achieved_target = ltp;
+            this.ACTIVE_STRATEGIES[matched_index].achieved_target -
+            matched_strategy.trailing_sl_points;
           console.log(
             `🚀 Trailing sl for ${matched_strategy.id} -> Trade: ${type}, Target achieved: ${ltp}, Old SL: ${matched_strategy.trailed_sl}, New SL: ${this.ACTIVE_STRATEGIES[matched_index].trailed_sl} `,
             commonPrint()
@@ -613,16 +615,16 @@ class Angel {
         }
       } else if (type === 'PE') {
         if (ltp <= matched_strategy.target) {
+          // set target achieved
+          this.ACTIVE_STRATEGIES[matched_index].achieved_target =
+            this.ACTIVE_STRATEGIES[matched_index].target;
           // set next target
-          this.ACTIVE_STRATEGIES[matched_index].target =
-            ltp - matched_strategy.target_difference_points;
-
+          this.ACTIVE_STRATEGIES[matched_index].target -=
+            matched_strategy.target_difference_points;
           // trail SL
           this.ACTIVE_STRATEGIES[matched_index].trailed_sl =
-            ltp + matched_strategy.trailing_sl_points;
-
-          // set target achieved
-          this.ACTIVE_STRATEGIES[matched_index].achieved_target = ltp;
+            this.ACTIVE_STRATEGIES[matched_index].achieved_target +
+            matched_strategy.trailing_sl_points;
           console.log(
             `🚀 Trailing sl for ${matched_strategy.id} -> Trade: ${type}, Target achieved: ${ltp}, Old SL: ${matched_strategy.trailed_sl}, New SL: ${this.ACTIVE_STRATEGIES[matched_index].trailed_sl} `,
             commonPrint()
