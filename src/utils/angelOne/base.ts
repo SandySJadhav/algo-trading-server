@@ -466,29 +466,27 @@ class Angel {
 
     if (order_status === 'PLACED') {
       // placed order, waiting for exit trigger
-      this.handleExitStrategy(item, matched_index);
-      return;
+      return this.handleExitStrategy(item, matched_index);
     } else if (order_status !== 'IDLE') {
-      this.restOrderStatus(order_status, id);
-      return;
+      return this.restOrderStatus(order_status, id);
     } else if (!call_instrument_to_trade || !put_instrument_to_trade) {
       console.log('🚀 Searching for call & put instruments ', commonPrint());
       this.ACTIVE_STRATEGIES[matched_index].order_status = 'STRIKE_SELECTION';
       const matchedSearchTerm = getSearchTerm(matched_strategy, item);
-      this.updateCALLPUTStrikes(matchedSearchTerm, matched_index);
-      return;
+      return this.updateCALLPUTStrikes(matchedSearchTerm, matched_index);
     } else if (entries_taken_today < max_entries_per_day) {
       if (
         previous_candle === 'CROSSES' &&
         instrument_to_watch.exch_seg === 'MCX'
       ) {
-        this.handleCrossing(item, matched_index);
+        return this.handleCrossing(item, matched_index);
       } else {
         this.ACTIVE_STRATEGIES.splice(matched_index, 1);
         console.log(
           '🔥 Handle for this type of execution is not written!!! ',
           commonPrint()
         );
+        return;
       }
     }
   }
@@ -709,61 +707,47 @@ class Angel {
       Number(hours + '.' + minutes) >= matched_strategy.start_entry_after &&
       Number(hours + '.' + minutes) <= matched_strategy.stop_entry_after
     ) {
-      this.ACTIVE_STRATEGIES[matched_index].previous_candle_high =
-        this.getPreviousCandleHigh(matched_strategy.data);
-      this.ACTIVE_STRATEGIES[matched_index].previous_candle_low =
-        this.getPreviousCandleLow(matched_strategy.data);
+      const previousCandleHigh = this.getPreviousCandleHigh(
+        matched_strategy.data
+      );
+      const previousCandleLow = this.getPreviousCandleLow(
+        matched_strategy.data
+      );
       // we can take entry here
       console.log(
         `🚀 Waiting for entry -> LTP: ${ltp}, Range [${
-          this.ACTIVE_STRATEGIES[matched_index].previous_candle_high +
-          matched_strategy.buffer_points
-        }:${
-          this.ACTIVE_STRATEGIES[matched_index].previous_candle_low -
-          matched_strategy.buffer_points
-        }]`,
+          previousCandleHigh + matched_strategy.buffer_points
+        }:${previousCandleLow - matched_strategy.buffer_points}]`,
         commonPrint()
       );
-      if (
-        ltp >=
-        this.ACTIVE_STRATEGIES[matched_index].previous_candle_high +
-          matched_strategy.buffer_points
-      ) {
-        // setup SL
-        this.ACTIVE_STRATEGIES[matched_index].trailed_sl =
-          this.ACTIVE_STRATEGIES[matched_index].previous_candle_low - 1;
+      if (ltp >= previousCandleHigh + matched_strategy.buffer_points) {
         // record entry price
         this.ACTIVE_STRATEGIES[matched_index].entry_price = ltp;
-        // capture target price difference
-        this.ACTIVE_STRATEGIES[matched_index].target_difference_points =
-          this.ACTIVE_STRATEGIES[matched_index].entry_price -
-          this.ACTIVE_STRATEGIES[matched_index].trailed_sl;
-        // setup target 1;
-        this.ACTIVE_STRATEGIES[matched_index].target =
-          this.ACTIVE_STRATEGIES[matched_index].entry_price +
-          this.ACTIVE_STRATEGIES[matched_index].target_difference_points;
-        // place order
-        this.placeMarketOrder('CE', matched_index);
-      } else if (
-        ltp <=
-        this.ACTIVE_STRATEGIES[matched_index].previous_candle_low -
-          matched_strategy.buffer_points
-      ) {
         // setup SL
         this.ACTIVE_STRATEGIES[matched_index].trailed_sl =
-          this.ACTIVE_STRATEGIES[matched_index].previous_candle_high + 1;
-        // setup entry price
-        this.ACTIVE_STRATEGIES[matched_index].entry_price = ltp;
-        // setup target price difference
+          previousCandleLow - 1;
+        // capture target price difference
         this.ACTIVE_STRATEGIES[matched_index].target_difference_points =
-          this.ACTIVE_STRATEGIES[matched_index].trailed_sl -
-          this.ACTIVE_STRATEGIES[matched_index].entry_price;
+          ltp - previousCandleLow - 1;
         // setup target 1;
         this.ACTIVE_STRATEGIES[matched_index].target =
-          this.ACTIVE_STRATEGIES[matched_index].entry_price -
-          this.ACTIVE_STRATEGIES[matched_index].target_difference_points;
+          ltp + this.ACTIVE_STRATEGIES[matched_index].target_difference_points;
         // place order
-        this.placeMarketOrder('PE', matched_index);
+        return this.placeMarketOrder('CE', matched_index);
+      } else if (ltp <= previousCandleLow - matched_strategy.buffer_points) {
+        // record entry price
+        this.ACTIVE_STRATEGIES[matched_index].entry_price = ltp;
+        // setup SL
+        this.ACTIVE_STRATEGIES[matched_index].trailed_sl =
+          previousCandleHigh + 1;
+        // capture target price difference
+        this.ACTIVE_STRATEGIES[matched_index].target_difference_points =
+          previousCandleHigh + 1 - ltp;
+        // setup target 1;
+        this.ACTIVE_STRATEGIES[matched_index].target =
+          ltp - this.ACTIVE_STRATEGIES[matched_index].target_difference_points;
+        // place order
+        return this.placeMarketOrder('PE', matched_index);
       }
     } else {
       console.log(
