@@ -391,7 +391,11 @@ class Angel {
 
   async updateCALLPUTStrikes(searchTerm: string, matched_index: number) {
     const response = await searchInFirestore({ searchTerm });
-    if (response.statusCode === 200 && response.data?.length === 2) {
+    if (
+      response.statusCode === 200 &&
+      response?.data?.length &&
+      response.data.length > 1
+    ) {
       const call_instrument_to_trade = <instrument_prop>(
         response.data.find((item: instrument_prop) =>
           item.rel_keywords?.includes('CE')
