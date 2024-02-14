@@ -389,30 +389,34 @@ class Angel {
     return ltp.parse(data);
   }
 
-  async updateCALLPUTStrikes(searchTerm: string, matched_index: number) {
+  async updateCALLPUTStrikes(
+    searchTerm: string,
+    matched_index: number,
+    type: string
+  ) {
     const response = await searchInFirestore({ searchTerm });
-    if (
-      response.statusCode === 200 &&
-      response?.data?.length &&
-      response.data.length > 1
-    ) {
-      const call_instrument_to_trade = <instrument_prop>(
-        response.data.find((item: instrument_prop) =>
-          item.rel_keywords?.includes('CE')
-        )
-      );
-      if (call_instrument_to_trade) {
-        this.ACTIVE_STRATEGIES[matched_index].call_instrument_to_trade =
-          call_instrument_to_trade;
+    if (response.statusCode === 200 && response?.data?.length) {
+      if (type === 'CE') {
+        const call_instrument_to_trade = <instrument_prop>(
+          response.data.find((item: instrument_prop) =>
+            item.rel_keywords?.includes('CE')
+          )
+        );
+        if (call_instrument_to_trade) {
+          this.ACTIVE_STRATEGIES[matched_index].call_instrument_to_trade =
+            call_instrument_to_trade;
+        }
       }
-      const put_instrument_to_trade = <instrument_prop>(
-        response.data.find((item: instrument_prop) =>
-          item.rel_keywords?.includes('PE')
-        )
-      );
-      if (put_instrument_to_trade) {
-        this.ACTIVE_STRATEGIES[matched_index].put_instrument_to_trade =
-          put_instrument_to_trade;
+      if (type === 'PE') {
+        const put_instrument_to_trade = <instrument_prop>(
+          response.data.find((item: instrument_prop) =>
+            item.rel_keywords?.includes('PE')
+          )
+        );
+        if (put_instrument_to_trade) {
+          this.ACTIVE_STRATEGIES[matched_index].put_instrument_to_trade =
+            put_instrument_to_trade;
+        }
       }
       if (
         this.ACTIVE_STRATEGIES[matched_index].call_instrument_to_trade &&
@@ -476,8 +480,9 @@ class Angel {
     } else if (!call_instrument_to_trade || !put_instrument_to_trade) {
       console.log('🚀 Searching for call & put instruments ', commonPrint());
       this.ACTIVE_STRATEGIES[matched_index].order_status = 'STRIKE_SELECTION';
-      const matchedSearchTerm = getSearchTerm(matched_strategy, item);
-      return this.updateCALLPUTStrikes(matchedSearchTerm, matched_index);
+      const { CE, PE } = getSearchTerm(matched_strategy, item);
+      this.updateCALLPUTStrikes(CE, matched_index, 'CE');
+      return this.updateCALLPUTStrikes(PE, matched_index, 'PE');
     } else if (entries_taken_today < max_entries_per_day) {
       if (
         previous_candle === 'CROSSES' &&
