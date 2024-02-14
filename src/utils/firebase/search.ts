@@ -185,7 +185,14 @@ export const getSearchTerm = (
   { instrument_to_watch }: strategy_prop,
   item: ltp_prop
 ) => {
-  return (
-    instrument_to_watch.name + ' ' + getStrike(Number(item.last_traded_price))
-  );
+  return {
+    CE:
+      instrument_to_watch.name +
+      ' ' +
+      getStrike(Number(item.last_traded_price) + 200),
+    PE:
+      instrument_to_watch.name +
+      ' ' +
+      getStrike(Number(item.last_traded_price) - 200)
+  };
 };
