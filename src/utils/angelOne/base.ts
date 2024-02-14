@@ -419,11 +419,11 @@ class Angel {
         this.ACTIVE_STRATEGIES[matched_index].put_instrument_to_trade
       ) {
         console.log(
-          `🚀 Call instrument matched -> ${this.ACTIVE_STRATEGIES[matched_index].call_instrument_to_trade?.displayName}`,
+          `🚀 Call instrument matched -> ${this.ACTIVE_STRATEGIES[matched_index].call_instrument_to_trade?.display_name}`,
           commonPrint()
         );
         console.log(
-          `🚀 Put instrument matched -> ${this.ACTIVE_STRATEGIES[matched_index].put_instrument_to_trade?.displayName}`,
+          `🚀 Put instrument matched -> ${this.ACTIVE_STRATEGIES[matched_index].put_instrument_to_trade?.display_name}`,
           commonPrint()
         );
         this.ACTIVE_STRATEGIES[matched_index].order_status = 'IDLE';

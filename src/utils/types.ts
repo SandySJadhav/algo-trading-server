@@ -16,7 +16,7 @@ export interface instrument_prop {
   tick_size: any;
   rel_keywords?: string[];
   matches?: any;
-  displayName?: string;
+  display_name?: string;
 }
 
 export interface strategy_prop {
