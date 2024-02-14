@@ -61,19 +61,30 @@ const formatPayload = ({
   const payload = getMomentPayload(expiry || '12DEC9999');
   const expiryDate = getISTTime().set(payload);
   let strike;
+  let option_type;
+
+  let display_name = name;
+
   if (exch_seg !== 'NSE') {
     // stocks don't have expiry
+    if (!keywordExists(rel_keywords, payload.date + '')) {
+      rel_keywords.push(payload.date + ''); // 07
+      display_name += ' ' + payload.date;
+    }
     if (
       MONTHS[payload.month] &&
       !keywordExists(rel_keywords, MONTHS[payload.month])
     ) {
       rel_keywords.push(MONTHS[payload.month]); // JAN
+      display_name += ' ' + MONTHS[payload.month];
     }
-    if (!keywordExists(rel_keywords, payload.date + '')) {
-      rel_keywords.push(payload.date + ''); // 07
+    if (!keywordExists(rel_keywords, expiryDate.year() + '')) {
+      rel_keywords.push(expiryDate.year() + ''); // 2024
+      display_name += ' ' + expiryDate.year();
     }
     if (['FUTCOM', 'FUTSTK', 'FUTIDX'].includes(instrumenttype)) {
       if (!keywordExists(rel_keywords, 'FUT')) {
+        option_type = 'FUT';
         rel_keywords.push('FUT');
       }
     } else if (['OPTFUT', 'OPTSTK', 'OPTIDX'].includes(instrumenttype)) {
@@ -84,6 +95,7 @@ const formatPayload = ({
           ? 'PE'
           : '';
       if (optionType) {
+        option_type = optionType;
         if (!keywordExists(rel_keywords, optionType)) {
           rel_keywords.push(optionType); // CE or PE
         }
@@ -98,6 +110,7 @@ const formatPayload = ({
         }
         if (!isNaN(Number(wrdStr))) {
           strike = Number(wrdStr);
+          display_name += ' ' + strike;
         }
         if (!keywordExists(rel_keywords, wrdStr)) {
           rel_keywords.push(wrdStr); // 7000
@@ -119,6 +132,7 @@ const formatPayload = ({
         );
       }
     }
+    display_name += ' ' + option_type;
   }
 
   if (
@@ -145,6 +159,7 @@ const formatPayload = ({
     token,
     symbol,
     name,
+    display_name,
     lotsize,
     instrumenttype,
     exch_seg,
@@ -152,7 +167,8 @@ const formatPayload = ({
     tick_size,
     name_keywords,
     rel_keywords,
-    strike
+    strike,
+    option_type
   };
 };
 
