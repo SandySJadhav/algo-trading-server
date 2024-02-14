@@ -393,7 +393,8 @@ class Angel {
     const response = await searchInFirestore({ searchTerm });
     if (
       response.statusCode === 200 &&
-      (response.data?.length === 2 || response.data?.length === 4)
+      response?.data?.length &&
+      response.data.length >= 2
     ) {
       const call_instrument_to_trade = <instrument_prop>(
         response.data.find((item: instrument_prop) =>

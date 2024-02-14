@@ -60,7 +60,7 @@ const formatPayload = ({
   const rel_keywords: any = [];
   const payload = getMomentPayload(expiry || '12DEC9999');
   const expiryDate = getISTTime().set(payload);
-
+  let strike;
   if (exch_seg !== 'NSE') {
     // stocks don't have expiry
     if (
@@ -95,6 +95,9 @@ const formatPayload = ({
         } else {
           // NFO option
           wrdStr = wrdStr.substring(7); // output = 7000
+        }
+        if (!isNaN(Number(wrdStr))) {
+          strike = Number(wrdStr);
         }
         if (!keywordExists(rel_keywords, wrdStr)) {
           rel_keywords.push(wrdStr); // 7000
@@ -148,7 +151,8 @@ const formatPayload = ({
     expiry,
     tick_size,
     name_keywords,
-    rel_keywords
+    rel_keywords,
+    strike
   };
 };
 
@@ -171,8 +175,8 @@ const filterInstruments = (instruments: instrument_prop[]) => {
         const diffTime = expiryDate.valueOf() - todayDate.valueOf();
         // conver to days
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        // check if difference is not more than 32 days and not less than today's date
-        if (diffDays > 0 && diffDays < 32) {
+        // check if difference is not more than 36 days and not less than today's date
+        if (diffDays > 0 && diffDays < 36) {
           return true;
         }
         // expiry date is faar away more than what we need

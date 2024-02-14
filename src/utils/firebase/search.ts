@@ -68,7 +68,7 @@ export const searchInFirestore = async (params: SearchProps) => {
         .orderBy('name')
         .startAt(allKeywords[0])
         .endAt(allKeywords[0] + '\uf8ff')
-        .limit(10)
+        .limit(4)
         .get();
     } else {
       response = await instruments_collection
@@ -76,7 +76,7 @@ export const searchInFirestore = async (params: SearchProps) => {
         .orderBy('name')
         .startAt(allKeywords[0])
         .endAt(allKeywords[0] + '\uf8ff')
-        .limit(5)
+        .limit(2)
         .get();
     }
 
