@@ -60,20 +60,31 @@ const formatPayload = ({
   const rel_keywords: any = [];
   const payload = getMomentPayload(expiry || '12DEC9999');
   const expiryDate = getISTTime().set(payload);
+  let strike;
+  let option_type;
+
+  let display_name = name;
 
   if (exch_seg !== 'NSE') {
     // stocks don't have expiry
+    if (!keywordExists(rel_keywords, payload.date + '')) {
+      rel_keywords.push(payload.date + ''); // 07
+      display_name += ' ' + payload.date;
+    }
     if (
       MONTHS[payload.month] &&
       !keywordExists(rel_keywords, MONTHS[payload.month])
     ) {
       rel_keywords.push(MONTHS[payload.month]); // JAN
+      display_name += ' ' + MONTHS[payload.month];
     }
-    if (!keywordExists(rel_keywords, payload.date + '')) {
-      rel_keywords.push(payload.date + ''); // 07
+    if (!keywordExists(rel_keywords, expiryDate.year() + '')) {
+      rel_keywords.push(expiryDate.year() + ''); // 2024
+      display_name += ' ' + expiryDate.year();
     }
     if (['FUTCOM', 'FUTSTK', 'FUTIDX'].includes(instrumenttype)) {
       if (!keywordExists(rel_keywords, 'FUT')) {
+        option_type = 'FUT';
         rel_keywords.push('FUT');
       }
     } else if (['OPTFUT', 'OPTSTK', 'OPTIDX'].includes(instrumenttype)) {
@@ -84,6 +95,7 @@ const formatPayload = ({
           ? 'PE'
           : '';
       if (optionType) {
+        option_type = optionType;
         if (!keywordExists(rel_keywords, optionType)) {
           rel_keywords.push(optionType); // CE or PE
         }
@@ -95,6 +107,10 @@ const formatPayload = ({
         } else {
           // NFO option
           wrdStr = wrdStr.substring(7); // output = 7000
+        }
+        if (!isNaN(Number(wrdStr))) {
+          strike = Number(wrdStr);
+          display_name += ' ' + strike;
         }
         if (!keywordExists(rel_keywords, wrdStr)) {
           rel_keywords.push(wrdStr); // 7000
@@ -116,6 +132,7 @@ const formatPayload = ({
         );
       }
     }
+    display_name += ' ' + option_type;
   }
 
   if (
@@ -142,13 +159,16 @@ const formatPayload = ({
     token,
     symbol,
     name,
+    display_name,
     lotsize,
     instrumenttype,
     exch_seg,
     expiry,
     tick_size,
     name_keywords,
-    rel_keywords
+    rel_keywords,
+    strike,
+    option_type
   };
 };
 
@@ -171,8 +191,8 @@ const filterInstruments = (instruments: instrument_prop[]) => {
         const diffTime = expiryDate.valueOf() - todayDate.valueOf();
         // conver to days
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        // check if difference is not more than 32 days and not less than today's date
-        if (diffDays > 0 && diffDays < 32) {
+        // check if difference is not more than 36 days and not less than today's date
+        if (diffDays > 0 && diffDays < 36) {
           return true;
         }
         // expiry date is faar away more than what we need

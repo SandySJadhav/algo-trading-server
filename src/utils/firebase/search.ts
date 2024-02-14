@@ -68,7 +68,7 @@ export const searchInFirestore = async (params: SearchProps) => {
         .orderBy('name')
         .startAt(allKeywords[0])
         .endAt(allKeywords[0] + '\uf8ff')
-        .limit(10)
+        .limit(4)
         .get();
     } else {
       response = await instruments_collection
@@ -76,7 +76,7 @@ export const searchInFirestore = async (params: SearchProps) => {
         .orderBy('name')
         .startAt(allKeywords[0])
         .endAt(allKeywords[0] + '\uf8ff')
-        .limit(5)
+        .limit(2)
         .get();
     }
 
@@ -91,39 +91,7 @@ export const searchInFirestore = async (params: SearchProps) => {
     const results: instrument_prop[] = [];
     response.forEach((res: any) => {
       const resData: instrument_prop = res.data();
-      const { symbol, exch_seg, name, instrumenttype, expiry } = resData;
-      if (exch_seg !== 'NSE') {
-        const payload = getMomentPayload(expiry);
-        const expiryDate = getISTTime().set(payload);
-        let newSymbol: string = name;
-        const month = months[expiryDate.month()]; // month = JAN
-        const expDate = expiry.split(month)[0]; // expDate = 31
-
-        newSymbol += ' ' + expDate + ' ' + month + ' ' + expiryDate.year();
-
-        if (['FUTCOM', 'FUTSTK', 'FUTIDX'].includes(instrumenttype)) {
-          newSymbol += ' FUT';
-        } else if (['OPTFUT', 'OPTSTK', 'OPTIDX'].includes(instrumenttype)) {
-          let wrdStr = symbol.substring(name.length);
-          const optionType: string = wrdStr.endsWith('CE') ? 'CE' : 'PE';
-          wrdStr = wrdStr.substring(0, wrdStr.length - 2);
-          if (instrumenttype === 'OPTFUT') {
-            // MCX option
-            wrdStr = wrdStr.substring(5); // output = 7000
-          } else {
-            // NFO option
-            wrdStr = wrdStr.substring(7); // output = 7000
-          }
-          newSymbol += ' ' + wrdStr + ' ' + optionType;
-        }
-
-        results.push({
-          ...resData,
-          displayName: newSymbol
-        });
-      } else {
-        results.push(resData);
-      }
+      results.push(resData);
     });
 
     const data: instrument_prop[] = getFilteredResults(results, allKeywords);
@@ -185,14 +153,7 @@ export const getSearchTerm = (
   { instrument_to_watch }: strategy_prop,
   item: ltp_prop
 ) => {
-  return {
-    CE:
-      instrument_to_watch.name +
-      ' ' +
-      getStrike(Number(item.last_traded_price) + 200),
-    PE:
-      instrument_to_watch.name +
-      ' ' +
-      getStrike(Number(item.last_traded_price) - 200)
-  };
+  return (
+    instrument_to_watch.name + ' ' + getStrike(Number(item.last_traded_price))
+  );
 };
