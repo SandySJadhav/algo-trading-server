@@ -17,6 +17,8 @@ export interface instrument_prop {
   rel_keywords?: string[];
   matches?: any;
   display_name?: string;
+  strike?: number;
+  option_type?: string;
 }
 
 export interface strategy_prop {
