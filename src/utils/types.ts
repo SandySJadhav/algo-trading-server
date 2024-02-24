@@ -56,6 +56,10 @@ export interface strategy_prop {
   target: number;
   target_difference_points: number;
   achieved_target: number;
+
+  // entry countdowns
+  call_entry_countdown_status: 'IDLE' | 'INPROGRESS' | 'COMPLETE';
+  put_entry_countdown_status: 'IDLE' | 'INPROGRESS' | 'COMPLETE';
 }
 
 export interface ltp_prop {
