@@ -696,7 +696,7 @@ class Angel {
 
   addCallCountdown(
     matched_index: number,
-    true_entry_countdown_in_seconds: number
+    entry_countdown_in_seconds: number
   ) {
     if (
       this.ACTIVE_STRATEGIES[matched_index].call_entry_countdown_status !==
@@ -707,13 +707,13 @@ class Angel {
       setTimeout(() => {
         this.ACTIVE_STRATEGIES[matched_index].call_entry_countdown_status =
           'COMPLETE';
-      }, 1000 * true_entry_countdown_in_seconds);
+      }, 1000 * entry_countdown_in_seconds);
     }
   }
 
   addPutCountdown(
     matched_index: number,
-    true_entry_countdown_in_seconds: number
+    entry_countdown_in_seconds: number
   ) {
     if (
       this.ACTIVE_STRATEGIES[matched_index].put_entry_countdown_status !==
@@ -724,7 +724,7 @@ class Angel {
       setTimeout(() => {
         this.ACTIVE_STRATEGIES[matched_index].put_entry_countdown_status =
           'COMPLETE';
-      }, 1000 * true_entry_countdown_in_seconds);
+      }, 1000 * entry_countdown_in_seconds);
     }
   }
 
@@ -755,7 +755,7 @@ class Angel {
           // allow entry only after 2 minutes of candle sustaining above entry point
           return this.addCallCountdown(
             matched_index,
-            matched_strategy.true_entry_countdown_in_seconds
+            matched_strategy.entry_countdown_in_seconds
           );
         } else if (ltp < CEEntry + matched_strategy.buffer_points) {
           // record entry price
@@ -783,7 +783,7 @@ class Angel {
           // allow entry only after 2 minutes of candle sustaining below entry point
           return this.addPutCountdown(
             matched_index,
-            matched_strategy.true_entry_countdown_in_seconds
+            matched_strategy.entry_countdown_in_seconds
           );
         } else if (ltp > PEEntry - matched_strategy.buffer_points) {
           // record entry price

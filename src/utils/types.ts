@@ -45,7 +45,7 @@ export interface strategy_prop {
   call_instrument_to_trade?: instrument_prop;
   put_instrument_to_trade?: instrument_prop;
   lots: number;
-  true_entry_countdown_in_seconds: number;
+  entry_countdown_in_seconds: number;
 
   // these are local variables, no need to sync with firestore
   data: any;
