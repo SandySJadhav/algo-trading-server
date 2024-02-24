@@ -613,11 +613,6 @@ class Angel {
             `🚀 Trailing sl for ${matched_strategy.id} -> Trade: ${type}, LTP: ${ltp}, Old SL: ${matched_strategy.trailed_sl}, New SL: ${this.ACTIVE_STRATEGIES[matched_index].trailed_sl} `,
             commonPrint()
           );
-        } else {
-          console.log(
-            `🚀 Strategy ${matched_strategy.id} -> Trade: ${type}, LTP: ${ltp}, SL: ${this.ACTIVE_STRATEGIES[matched_index].trailed_sl} `,
-            commonPrint()
-          );
         }
       } else if (type === 'PE') {
         if (ltp <= matched_strategy.target) {
@@ -647,11 +642,6 @@ class Angel {
             matched_strategy.achieved_target;
           console.log(
             `🚀 Trailing sl for ${matched_strategy.id} -> Trade: ${type}, LTP: ${ltp}, Old SL: ${matched_strategy.trailed_sl}, New SL: ${this.ACTIVE_STRATEGIES[matched_index].trailed_sl} `,
-            commonPrint()
-          );
-        } else {
-          console.log(
-            `🚀 Strategy ${matched_strategy.id} -> Trade: ${type}, LTP: ${ltp}, SL: ${this.ACTIVE_STRATEGIES[matched_index].trailed_sl} `,
             commonPrint()
           );
         }
@@ -804,11 +794,6 @@ class Angel {
             commonPrint()
           );
         }
-      } else {
-        console.log(
-          `🚀 Waiting for entry -> LTP: ${ltp}, Range [${CEEntry}:${PEEntry}]`,
-          commonPrint()
-        );
       }
     } else {
       console.log(
