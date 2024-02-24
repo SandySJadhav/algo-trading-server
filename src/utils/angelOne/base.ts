@@ -613,11 +613,6 @@ class Angel {
             `🚀 Trailing sl for ${matched_strategy.id} -> Trade: ${type}, LTP: ${ltp}, Old SL: ${matched_strategy.trailed_sl}, New SL: ${this.ACTIVE_STRATEGIES[matched_index].trailed_sl} `,
             commonPrint()
           );
-        } else {
-          console.log(
-            `🚀 Strategy ${matched_strategy.id} -> Trade: ${type}, LTP: ${ltp}, SL: ${this.ACTIVE_STRATEGIES[matched_index].trailed_sl} `,
-            commonPrint()
-          );
         }
       } else if (type === 'PE') {
         if (ltp <= matched_strategy.target) {
@@ -647,11 +642,6 @@ class Angel {
             matched_strategy.achieved_target;
           console.log(
             `🚀 Trailing sl for ${matched_strategy.id} -> Trade: ${type}, LTP: ${ltp}, Old SL: ${matched_strategy.trailed_sl}, New SL: ${this.ACTIVE_STRATEGIES[matched_index].trailed_sl} `,
-            commonPrint()
-          );
-        } else {
-          console.log(
-            `🚀 Strategy ${matched_strategy.id} -> Trade: ${type}, LTP: ${ltp}, SL: ${this.ACTIVE_STRATEGIES[matched_index].trailed_sl} `,
             commonPrint()
           );
         }
@@ -704,7 +694,10 @@ class Angel {
     }
   }
 
-  addCallCountdown(matched_index: number) {
+  addCallCountdown(
+    matched_index: number,
+    entry_countdown_in_seconds: number
+  ) {
     if (
       this.ACTIVE_STRATEGIES[matched_index].call_entry_countdown_status !==
       'INPROGRESS'
@@ -714,11 +707,14 @@ class Angel {
       setTimeout(() => {
         this.ACTIVE_STRATEGIES[matched_index].call_entry_countdown_status =
           'COMPLETE';
-      }, 1000 * 120);
+      }, 1000 * entry_countdown_in_seconds);
     }
   }
 
-  addPutCountdown(matched_index: number) {
+  addPutCountdown(
+    matched_index: number,
+    entry_countdown_in_seconds: number
+  ) {
     if (
       this.ACTIVE_STRATEGIES[matched_index].put_entry_countdown_status !==
       'INPROGRESS'
@@ -728,7 +724,7 @@ class Angel {
       setTimeout(() => {
         this.ACTIVE_STRATEGIES[matched_index].put_entry_countdown_status =
           'COMPLETE';
-      }, 1000 * 120);
+      }, 1000 * entry_countdown_in_seconds);
     }
   }
 
@@ -741,7 +737,8 @@ class Angel {
     const matched_strategy = this.ACTIVE_STRATEGIES[matched_index];
     if (
       Number(hours + '.' + minutes) >= matched_strategy.start_entry_after &&
-      Number(hours + '.' + minutes) <= matched_strategy.stop_entry_after
+      Number(hours + '.' + minutes) <= matched_strategy.stop_entry_after &&
+      matched_strategy.stop_entry_after - Number(hours + '.' + minutes) > 30
     ) {
       const previousCandleHigh = this.getPreviousCandleHigh(
         matched_strategy.data
@@ -750,53 +747,65 @@ class Angel {
         matched_strategy.data
       );
       // we can take entry here
-
       const CEEntry = previousCandleHigh + matched_strategy.buffer_points;
       const PEEntry = previousCandleLow - matched_strategy.buffer_points;
-
-      console.log(
-        `🚀 Waiting for entry -> LTP: ${ltp}, Range [${CEEntry}:${PEEntry}]`,
-        commonPrint()
-      );
 
       if (ltp > CEEntry) {
         if (matched_strategy.call_entry_countdown_status !== 'COMPLETE') {
           // allow entry only after 2 minutes of candle sustaining above entry point
-          return this.addCallCountdown(matched_index);
+          return this.addCallCountdown(
+            matched_index,
+            matched_strategy.entry_countdown_in_seconds
+          );
+        } else if (ltp < CEEntry + matched_strategy.buffer_points) {
+          // record entry price
+          this.ACTIVE_STRATEGIES[matched_index].entry_price = ltp;
+          // setup SL
+          this.ACTIVE_STRATEGIES[matched_index].trailed_sl =
+            previousCandleLow - 1;
+          // capture target price difference
+          this.ACTIVE_STRATEGIES[matched_index].target_difference_points =
+            CEEntry - previousCandleLow - 1;
+          // setup target 1;
+          this.ACTIVE_STRATEGIES[matched_index].target =
+            CEEntry +
+            this.ACTIVE_STRATEGIES[matched_index].target_difference_points;
+          // place order
+          return this.placeMarketOrder('CE', matched_index);
+        } else {
+          console.log(
+            'Price is too high to enter now in CE trade ',
+            commonPrint()
+          );
         }
-        // record entry price
-        this.ACTIVE_STRATEGIES[matched_index].entry_price = ltp;
-        // setup SL
-        this.ACTIVE_STRATEGIES[matched_index].trailed_sl =
-          previousCandleLow - 1;
-        // capture target price difference
-        this.ACTIVE_STRATEGIES[matched_index].target_difference_points =
-          CEEntry - previousCandleLow - 1;
-        // setup target 1;
-        this.ACTIVE_STRATEGIES[matched_index].target =
-          CEEntry +
-          this.ACTIVE_STRATEGIES[matched_index].target_difference_points;
-        // place order
-        return this.placeMarketOrder('CE', matched_index);
       } else if (ltp < PEEntry) {
         if (matched_strategy.put_entry_countdown_status !== 'COMPLETE') {
           // allow entry only after 2 minutes of candle sustaining below entry point
-          return this.addPutCountdown(matched_index);
+          return this.addPutCountdown(
+            matched_index,
+            matched_strategy.entry_countdown_in_seconds
+          );
+        } else if (ltp > PEEntry - matched_strategy.buffer_points) {
+          // record entry price
+          this.ACTIVE_STRATEGIES[matched_index].entry_price = ltp;
+          // setup SL
+          this.ACTIVE_STRATEGIES[matched_index].trailed_sl =
+            previousCandleHigh + 1;
+          // capture target price difference
+          this.ACTIVE_STRATEGIES[matched_index].target_difference_points =
+            previousCandleHigh + 1 - PEEntry;
+          // setup target 1;
+          this.ACTIVE_STRATEGIES[matched_index].target =
+            PEEntry -
+            this.ACTIVE_STRATEGIES[matched_index].target_difference_points;
+          // place order
+          return this.placeMarketOrder('PE', matched_index);
+        } else {
+          console.log(
+            'Price is too low to enter now in PE trade ',
+            commonPrint()
+          );
         }
-        // record entry price
-        this.ACTIVE_STRATEGIES[matched_index].entry_price = ltp;
-        // setup SL
-        this.ACTIVE_STRATEGIES[matched_index].trailed_sl =
-          previousCandleHigh + 1;
-        // capture target price difference
-        this.ACTIVE_STRATEGIES[matched_index].target_difference_points =
-          previousCandleHigh + 1 - PEEntry;
-        // setup target 1;
-        this.ACTIVE_STRATEGIES[matched_index].target =
-          PEEntry -
-          this.ACTIVE_STRATEGIES[matched_index].target_difference_points;
-        // place order
-        return this.placeMarketOrder('PE', matched_index);
       }
     } else {
       console.log(
