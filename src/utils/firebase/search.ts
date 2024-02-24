@@ -1,6 +1,5 @@
 import Firebase from './instance';
 import { instrument_prop, ltp_prop, strategy_prop } from '../types';
-import { getISTTime, getMomentPayload } from '../helpers';
 
 type SearchProps = {
   searchTerm: string;
