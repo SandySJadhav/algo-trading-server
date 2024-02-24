@@ -694,10 +694,7 @@ class Angel {
     }
   }
 
-  addCallCountdown(
-    matched_index: number,
-    entry_countdown_in_seconds: number
-  ) {
+  addCallCountdown(matched_index: number, entry_countdown_in_seconds: number) {
     if (
       this.ACTIVE_STRATEGIES[matched_index].call_entry_countdown_status !==
       'INPROGRESS'
@@ -711,10 +708,7 @@ class Angel {
     }
   }
 
-  addPutCountdown(
-    matched_index: number,
-    entry_countdown_in_seconds: number
-  ) {
+  addPutCountdown(matched_index: number, entry_countdown_in_seconds: number) {
     if (
       this.ACTIVE_STRATEGIES[matched_index].put_entry_countdown_status !==
       'INPROGRESS'
@@ -770,6 +764,12 @@ class Angel {
           this.ACTIVE_STRATEGIES[matched_index].target =
             CEEntry +
             this.ACTIVE_STRATEGIES[matched_index].target_difference_points;
+          // setup MAX SL to 25 points // 1250RS
+          if (
+            this.ACTIVE_STRATEGIES[matched_index].target_difference_points > 25
+          ) {
+            this.ACTIVE_STRATEGIES[matched_index].trailed_sl = CEEntry - 25;
+          }
           // place order
           return this.placeMarketOrder('CE', matched_index);
         } else {
@@ -798,6 +798,12 @@ class Angel {
           this.ACTIVE_STRATEGIES[matched_index].target =
             PEEntry -
             this.ACTIVE_STRATEGIES[matched_index].target_difference_points;
+          // setup MAX SL to 25 points // 1250RS
+          if (
+            this.ACTIVE_STRATEGIES[matched_index].target_difference_points > 25
+          ) {
+            this.ACTIVE_STRATEGIES[matched_index].trailed_sl = PEEntry + 25;
+          }
           // place order
           return this.placeMarketOrder('PE', matched_index);
         } else {
