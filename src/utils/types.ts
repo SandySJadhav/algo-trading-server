@@ -17,6 +17,8 @@ export interface instrument_prop {
   rel_keywords?: string[];
   matches?: any;
   display_name?: string;
+  strike?: number;
+  option_type?: string;
 }
 
 export interface strategy_prop {
@@ -54,6 +56,10 @@ export interface strategy_prop {
   target: number;
   target_difference_points: number;
   achieved_target: number;
+
+  // entry countdowns
+  call_entry_countdown_status: 'IDLE' | 'INPROGRESS' | 'COMPLETE';
+  put_entry_countdown_status: 'IDLE' | 'INPROGRESS' | 'COMPLETE';
 }
 
 export interface ltp_prop {

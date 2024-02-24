@@ -507,12 +507,14 @@ class Angel {
     if (type === 'CE') {
       this.ACTIVE_STRATEGIES[matched_index].profit_points =
         matched_strategy.exit_price - matched_strategy.entry_price - 2;
+      this.ACTIVE_STRATEGIES[matched_index].call_entry_countdown_status =
+        'IDLE';
     } else {
       this.ACTIVE_STRATEGIES[matched_index].profit_points =
         matched_strategy.entry_price - matched_strategy.exit_price - 2;
+      this.ACTIVE_STRATEGIES[matched_index].put_entry_countdown_status = 'IDLE';
     }
     this.ACTIVE_STRATEGIES[matched_index].order_status = 'COMPLETED';
-
     const order = await placeOrder(
       {
         duration: 'DAY',
@@ -702,6 +704,34 @@ class Angel {
     }
   }
 
+  addCallCountdown(matched_index: number) {
+    if (
+      this.ACTIVE_STRATEGIES[matched_index].call_entry_countdown_status !==
+      'INPROGRESS'
+    ) {
+      this.ACTIVE_STRATEGIES[matched_index].call_entry_countdown_status =
+        'INPROGRESS';
+      setTimeout(() => {
+        this.ACTIVE_STRATEGIES[matched_index].call_entry_countdown_status =
+          'COMPLETE';
+      }, 1000 * 120);
+    }
+  }
+
+  addPutCountdown(matched_index: number) {
+    if (
+      this.ACTIVE_STRATEGIES[matched_index].put_entry_countdown_status !==
+      'INPROGRESS'
+    ) {
+      this.ACTIVE_STRATEGIES[matched_index].put_entry_countdown_status =
+        'INPROGRESS';
+      setTimeout(() => {
+        this.ACTIVE_STRATEGIES[matched_index].put_entry_countdown_status =
+          'COMPLETE';
+      }, 1000 * 120);
+    }
+  }
+
   async handleCrossing(item: ltp_prop, matched_index: number) {
     const newDate = getISTTime();
     const hours = newDate.hour();
@@ -729,7 +759,11 @@ class Angel {
         commonPrint()
       );
 
-      if (ltp >= CEEntry) {
+      if (ltp > CEEntry) {
+        if (matched_strategy.call_entry_countdown_status !== 'COMPLETE') {
+          // allow entry only after 2 minutes of candle sustaining above entry point
+          return this.addCallCountdown(matched_index);
+        }
         // record entry price
         this.ACTIVE_STRATEGIES[matched_index].entry_price = ltp;
         // setup SL
@@ -744,7 +778,11 @@ class Angel {
           this.ACTIVE_STRATEGIES[matched_index].target_difference_points;
         // place order
         return this.placeMarketOrder('CE', matched_index);
-      } else if (ltp <= PEEntry) {
+      } else if (ltp < PEEntry) {
+        if (matched_strategy.put_entry_countdown_status !== 'COMPLETE') {
+          // allow entry only after 2 minutes of candle sustaining below entry point
+          return this.addPutCountdown(matched_index);
+        }
         // record entry price
         this.ACTIVE_STRATEGIES[matched_index].entry_price = ltp;
         // setup SL

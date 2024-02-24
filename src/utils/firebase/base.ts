@@ -95,7 +95,6 @@ const formatPayload = ({
           ? 'PE'
           : '';
       if (optionType) {
-        option_type = optionType;
         if (!keywordExists(rel_keywords, optionType)) {
           rel_keywords.push(optionType); // CE or PE
         }
@@ -115,6 +114,8 @@ const formatPayload = ({
         if (!keywordExists(rel_keywords, wrdStr)) {
           rel_keywords.push(wrdStr); // 7000
         }
+
+        option_type = optionType;
 
         const midVal: number = parseInt('' + wrdStr.length / 2);
         const minWordLen: number = midVal > 2 ? midVal : 3;
