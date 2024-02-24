@@ -766,9 +766,12 @@ class Angel {
             this.ACTIVE_STRATEGIES[matched_index].target_difference_points;
           // setup MAX SL to 25 points // 1250RS
           if (
-            this.ACTIVE_STRATEGIES[matched_index].target_difference_points > 25
+            this.ACTIVE_STRATEGIES[matched_index].target_difference_points -
+              matched_strategy.buffer_points >
+            26
           ) {
-            this.ACTIVE_STRATEGIES[matched_index].trailed_sl = CEEntry - 25;
+            this.ACTIVE_STRATEGIES[matched_index].trailed_sl =
+              previousCandleHigh - 26;
           }
           // place order
           return this.placeMarketOrder('CE', matched_index);
@@ -798,11 +801,14 @@ class Angel {
           this.ACTIVE_STRATEGIES[matched_index].target =
             PEEntry -
             this.ACTIVE_STRATEGIES[matched_index].target_difference_points;
-          // setup MAX SL to 25 points // 1250RS
+          // setup MAX SL to 26 points // 1350RS
           if (
-            this.ACTIVE_STRATEGIES[matched_index].target_difference_points > 25
+            this.ACTIVE_STRATEGIES[matched_index].target_difference_points -
+              matched_strategy.buffer_points >
+            26
           ) {
-            this.ACTIVE_STRATEGIES[matched_index].trailed_sl = PEEntry + 25;
+            this.ACTIVE_STRATEGIES[matched_index].trailed_sl =
+              previousCandleLow + 26;
           }
           // place order
           return this.placeMarketOrder('PE', matched_index);
