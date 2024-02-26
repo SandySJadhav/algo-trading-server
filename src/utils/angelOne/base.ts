@@ -731,8 +731,7 @@ class Angel {
     const matched_strategy = this.ACTIVE_STRATEGIES[matched_index];
     if (
       Number(hours + '.' + minutes) >= matched_strategy.start_entry_after &&
-      Number(hours + '.' + minutes) <= matched_strategy.stop_entry_after &&
-      matched_strategy.stop_entry_after - Number(hours + '.' + minutes) > 30
+      Number(hours + '.' + minutes) <= matched_strategy.stop_entry_after
     ) {
       const previousCandleHigh = this.getPreviousCandleHigh(
         matched_strategy.data
