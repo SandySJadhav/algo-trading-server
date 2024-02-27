@@ -117,7 +117,6 @@ class Angel {
       }
     });
     if (this.ACTIVE_STRATEGIES.length === 0) {
-      console.log('🚀 No any active strategies found 🏄!');
       return;
     }
     // fetch candle history for above strategies

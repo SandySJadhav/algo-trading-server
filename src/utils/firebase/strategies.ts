@@ -103,19 +103,18 @@ export const fetchAllActiveStrategies = async () => {
     const timestamp = parseFloat(hours + '.' + minutes);
 
     actual_instruments.forEach((instrument) => {
-      const strategy = data.find(
-        (ms) => ms.instrument_to_watch.id === instrument.id
-      );
-      if (strategy) {
-        strategy.instrument_to_watch = <instrument_prop>instrument.data();
-        strategy.instrument_to_watch.id = instrument.id;
-        if (
-          strategy.max_entries_per_day > strategy.entries_taken_today &&
-          timestamp >= strategy.start_entry_after
-        ) {
-          result.push(strategy);
+      data.forEach((strategy) => {
+        if (strategy.instrument_to_watch.id === instrument.id) {
+          strategy.instrument_to_watch = <instrument_prop>instrument.data();
+          strategy.instrument_to_watch.id = instrument.id;
+          if (
+            strategy.max_entries_per_day > strategy.entries_taken_today &&
+            timestamp >= strategy.start_entry_after
+          ) {
+            result.push(strategy);
+          }
         }
-      }
+      });
     });
 
     console.log(
