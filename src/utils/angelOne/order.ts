@@ -34,9 +34,6 @@ export const placeOrder = async (
   headers: any,
   matched_strategy: strategy_prop
 ) => {
-  return {
-    status: 200
-  }
   const response: OrderResponse = await postRequest(
     API.root + API.order_place,
     params,
