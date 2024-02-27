@@ -117,10 +117,6 @@ export const fetchAllActiveStrategies = async () => {
       });
     });
 
-    console.log(
-      `🚀 Total ${result.length} active strategies found in 🔥 store`,
-      commonPrint()
-    );
     resolve(result);
   });
 };
