@@ -746,10 +746,13 @@ class Angel {
       if (ltp > CEEntry) {
         if (matched_strategy.call_entry_countdown_status !== 'COMPLETE') {
           // allow entry only after 2 minutes of candle sustaining above entry point
-          return this.addCallCountdown(
-            matched_index,
-            matched_strategy.entry_countdown_in_seconds
-          );
+          if (ltp < CEEntry + matched_strategy.buffer_points) {
+            // cuntdown should start only if ltp is around our bying price.
+            return this.addCallCountdown(
+              matched_index,
+              matched_strategy.entry_countdown_in_seconds
+            );
+          }
         } else if (ltp < CEEntry + matched_strategy.buffer_points) {
           // record entry price
           this.ACTIVE_STRATEGIES[matched_index].entry_price = ltp;
@@ -783,10 +786,12 @@ class Angel {
       } else if (ltp < PEEntry) {
         if (matched_strategy.put_entry_countdown_status !== 'COMPLETE') {
           // allow entry only after 2 minutes of candle sustaining below entry point
-          return this.addPutCountdown(
-            matched_index,
-            matched_strategy.entry_countdown_in_seconds
-          );
+          if (ltp > PEEntry - matched_strategy.buffer_points) {
+            return this.addPutCountdown(
+              matched_index,
+              matched_strategy.entry_countdown_in_seconds
+            );
+          }
         } else if (ltp > PEEntry - matched_strategy.buffer_points) {
           // record entry price
           this.ACTIVE_STRATEGIES[matched_index].entry_price = ltp;
