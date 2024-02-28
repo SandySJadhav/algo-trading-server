@@ -707,9 +707,15 @@ class Angel {
     ) {
       this.ACTIVE_STRATEGIES[matched_index].call_entry_countdown_status =
         'INPROGRESS';
+      console.log(
+        `🚀 Strategy: ${this.ACTIVE_STRATEGIES[matched_index].id}, Countdown: ${this.ACTIVE_STRATEGIES[matched_index].call_entry_countdown_status} - ${entry_countdown_in_seconds} seconds`
+      );
       setTimeout(() => {
         this.ACTIVE_STRATEGIES[matched_index].call_entry_countdown_status =
           'COMPLETE';
+        console.log(
+          `🚀 Strategy: ${this.ACTIVE_STRATEGIES[matched_index].id}, Countdown: ${this.ACTIVE_STRATEGIES[matched_index].call_entry_countdown_status}`
+        );
       }, 1000 * entry_countdown_in_seconds);
     }
   }
@@ -721,9 +727,15 @@ class Angel {
     ) {
       this.ACTIVE_STRATEGIES[matched_index].put_entry_countdown_status =
         'INPROGRESS';
+      console.log(
+        `🚀 Strategy: ${this.ACTIVE_STRATEGIES[matched_index].id}, Countdown: ${this.ACTIVE_STRATEGIES[matched_index].call_entry_countdown_status} - ${entry_countdown_in_seconds} seconds`
+      );
       setTimeout(() => {
         this.ACTIVE_STRATEGIES[matched_index].put_entry_countdown_status =
           'COMPLETE';
+        console.log(
+          `🚀 Strategy: ${this.ACTIVE_STRATEGIES[matched_index].id}, Countdown: ${this.ACTIVE_STRATEGIES[matched_index].call_entry_countdown_status}`
+        );
       }, 1000 * entry_countdown_in_seconds);
     }
   }
@@ -794,6 +806,7 @@ class Angel {
               matched_strategy.entry_countdown_in_seconds
             );
           }
+          console.log(`🚀 Countdown in progress for ${matched_strategy.id}`);
           return;
         }
         // Place order now
