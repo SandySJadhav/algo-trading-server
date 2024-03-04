@@ -113,18 +113,10 @@ class Angel {
       if (strategy_already_running === -1) {
         // we need to find perfect option instrument to buy and cell
         this.ACTIVE_STRATEGIES.push(strategy);
-      } else {
-        console.log(
-          `🚀 Already loaded strategy ${strategy.id}, Order status: ${this.ACTIVE_STRATEGIES[strategy_already_running]?.order_status}`,
-          commonPrint()
-        );
       }
     });
     if (this.ACTIVE_STRATEGIES.length === 0) {
-      console.log(
-        `🚀 ${this.ACTIVE_STRATEGIES.length} active strategies loaded by this croner!`,
-        commonPrint()
-      );
+      console.log(`🚀 No any active strategies found!`, commonPrint());
       return;
     }
     // fetch candle history for above strategies
@@ -494,7 +486,7 @@ class Angel {
       } else {
         this.ACTIVE_STRATEGIES.splice(matched_index, 1);
         console.log(
-          '🔥 Handle for this type of execution is not written!!! ',
+          `🔥 ${matched_strategy.id}:${matched_strategy.previous_candle}:${instrument_to_watch.exch_seg} Handle for this type of execution is not written!!! `,
           commonPrint()
         );
         return;
@@ -786,14 +778,11 @@ class Angel {
         this.ACTIVE_STRATEGIES[matched_index].target =
           CEEntry +
           this.ACTIVE_STRATEGIES[matched_index].target_difference_points;
-        // setup MAX SL to 25 points // 1250RS
+        // setup MAX SL to 30 points
         if (
-          this.ACTIVE_STRATEGIES[matched_index].target_difference_points -
-            matched_strategy.buffer_points >
-          26
+          this.ACTIVE_STRATEGIES[matched_index].target_difference_points > 30
         ) {
-          this.ACTIVE_STRATEGIES[matched_index].trailed_sl =
-            previousCandleHigh - 26;
+          this.ACTIVE_STRATEGIES[matched_index].trailed_sl = CEEntry - 30;
         }
         // place order
         return this.placeMarketOrder('CE', matched_index);
@@ -824,12 +813,9 @@ class Angel {
           this.ACTIVE_STRATEGIES[matched_index].target_difference_points;
         // setup MAX SL to 26 points // 1350RS
         if (
-          this.ACTIVE_STRATEGIES[matched_index].target_difference_points -
-            matched_strategy.buffer_points >
-          26
+          this.ACTIVE_STRATEGIES[matched_index].target_difference_points > 30
         ) {
-          this.ACTIVE_STRATEGIES[matched_index].trailed_sl =
-            previousCandleLow + 26;
+          this.ACTIVE_STRATEGIES[matched_index].trailed_sl = PEEntry + 30;
         }
         // place order
         return this.placeMarketOrder('PE', matched_index);
