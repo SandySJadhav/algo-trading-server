@@ -720,13 +720,13 @@ class Angel {
       this.ACTIVE_STRATEGIES[matched_index].put_entry_countdown_status =
         'INPROGRESS';
       console.log(
-        `🚀 Strategy: ${this.ACTIVE_STRATEGIES[matched_index].id}, Countdown: ${this.ACTIVE_STRATEGIES[matched_index].call_entry_countdown_status} - ${entry_countdown_in_seconds} seconds`
+        `🚀 Strategy: ${this.ACTIVE_STRATEGIES[matched_index].id}, Countdown: ${this.ACTIVE_STRATEGIES[matched_index].put_entry_countdown_status} - ${entry_countdown_in_seconds} seconds`
       );
       setTimeout(() => {
         this.ACTIVE_STRATEGIES[matched_index].put_entry_countdown_status =
           'COMPLETE';
         console.log(
-          `🚀 Strategy: ${this.ACTIVE_STRATEGIES[matched_index].id}, Countdown: ${this.ACTIVE_STRATEGIES[matched_index].call_entry_countdown_status}`
+          `🚀 Strategy: ${this.ACTIVE_STRATEGIES[matched_index].id}, Countdown: ${this.ACTIVE_STRATEGIES[matched_index].put_entry_countdown_status}`
         );
       }, 1000 * entry_countdown_in_seconds);
     }
@@ -773,12 +773,12 @@ class Angel {
           previousCandleLow - 1;
         // capture target price difference
         this.ACTIVE_STRATEGIES[matched_index].target_difference_points =
-          CEEntry - previousCandleLow - 1;
+          CEEntry - previousCandleLow;
         // setup target 1;
         this.ACTIVE_STRATEGIES[matched_index].target =
           CEEntry +
           this.ACTIVE_STRATEGIES[matched_index].target_difference_points;
-        // setup MAX SL to 30 points
+        // setup MAX SL to 30 points - around 2300/- rupees
         if (
           this.ACTIVE_STRATEGIES[matched_index].target_difference_points > 30
         ) {
@@ -806,12 +806,12 @@ class Angel {
           previousCandleHigh + 1;
         // capture target price difference
         this.ACTIVE_STRATEGIES[matched_index].target_difference_points =
-          previousCandleHigh + 1 - PEEntry;
+          previousCandleHigh - PEEntry;
         // setup target 1;
         this.ACTIVE_STRATEGIES[matched_index].target =
           PEEntry -
           this.ACTIVE_STRATEGIES[matched_index].target_difference_points;
-        // setup MAX SL to 26 points // 1350RS
+        // setup MAX SL to 30 points - around 2300/- rupees
         if (
           this.ACTIVE_STRATEGIES[matched_index].target_difference_points > 30
         ) {
