@@ -21,7 +21,7 @@ import { cleanAllStrategies } from './strategies';
 
 const supportedInstruments: any = {
   MCX: {
-    OPTFUT: true, // commodity futures
+    OPTFUT: true, // commodity options
     FUTCOM: true // commodity futures
     // "COMDTY", // not supported
     // "FUTIDX", // not supported
@@ -175,8 +175,13 @@ const formatPayload = ({
 
 const filterInstruments = (instruments: instrument_prop[]) => {
   return instruments
-    .filter(({ exch_seg, expiry, symbol, instrumenttype }: instrument_prop) => {
-      if (supportedInstruments[exch_seg]?.[instrumenttype] && expiry) {
+    .filter(({ exch_seg, expiry, instrumenttype }: instrument_prop) => {
+      // TODO - We will consider only MCX data for now.
+      if (
+        supportedInstruments[exch_seg]?.[instrumenttype] &&
+        expiry &&
+        exch_seg === 'MCX'
+      ) {
         // either NFO or MCX, load only next 1 month of data
         const payload = getMomentPayload(expiry);
         const expiryDate = getISTTime().set(payload);
@@ -193,18 +198,17 @@ const filterInstruments = (instruments: instrument_prop[]) => {
         // conver to days
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         // check if difference is not more than 36 days and not less than today's date
-        if (diffDays > 0 && diffDays < 36) {
-          return true;
-        }
-        // expiry date is faar away more than what we need
-        return false;
+        return diffDays > 0 && diffDays < 36;
       }
+      /* TODO - temporary remove all stocks & rest of stuff
       return (
         exch_seg === 'NSE' &&
         symbol.endsWith('-EQ') &&
         !instrumenttype &&
         !expiry
       );
+      */
+      return false;
     })
     .map(
       ({

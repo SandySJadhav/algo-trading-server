@@ -68,7 +68,6 @@ export const fetchAllActiveStrategies = async () => {
     .get();
 
   if (response.empty) {
-    console.log('🚀 No any active strategies found in 🔥 store', commonPrint());
     return [];
   }
 
