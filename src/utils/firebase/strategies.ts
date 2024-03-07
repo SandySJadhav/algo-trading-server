@@ -37,10 +37,14 @@ export const updateOrderStatus = async (
 };
 
 export const cleanAllStrategies = async () => {
+  console.log(
+    '🚀 Started strategies cleaning process in 🔥 store ',
+    commonPrint()
+  );
   const strategies_colllection = Firebase.db.collection('strategies');
   const response = await strategies_colllection.get();
   if (response.empty) {
-    console.log('🚀 Nothing to reset in 🔥 store ', commonPrint());
+    console.log('🚀 No strategies to reset in 🔥 store ', commonPrint());
     return [];
   }
   const batch = Firebase.db.batch();
