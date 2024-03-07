@@ -204,8 +204,8 @@ const filterInstruments = (instruments: instrument_prop[]) => {
       return (
         exch_seg === 'NSE' &&
         symbol.endsWith('-EQ') &&
-        !instrumenttype &&
-        !expiry
+        .!instrumenttype &&
+        .!expiry
       );
       */
       return false;
@@ -315,6 +315,7 @@ const processInstruments = async (
 };
 
 const initiateDataSync = async () => {
+  console.log('🚀 Starting data sync croner ', commonPrint());
   const collection = await Firebase.db.collection('instruments');
   // delete existing data from firestore if already expired
   const deleteInstrumentList: any[] = [];
@@ -336,14 +337,17 @@ const initiateDataSync = async () => {
       deleteInstrumentList.push(doc.ref);
     });
   } catch (error) {
+    console.log('🚀 Error in data sync croner ', commonPrint());
     console.log(JSON.parse(JSON.stringify(error)));
     return;
   }
+  console.log(
+    `🚀 Found expired ${deleteInstrumentList.length} instruments`,
+    commonPrint()
+  );
   if (deleteInstrumentList.length > 0) {
     // proceed to delete instruments from database;
-    console.log(`🚀 Found expired ${deleteInstrumentList.length} instruments`);
     await processInstruments(deleteInstrumentList, collection, true);
-
     // fetch all instruments from Angel one free json file
     const { instruments, hasError } = await fetchAllInstruments();
     if (hasError) {
@@ -379,12 +383,8 @@ export const startCronerToSyncInstruments = () => {
    * * * * * * *
    */
 
-  // At 05:00 on every day-of-week from Monday through Friday.
-  Cron('0 0 5 * * 1-5', async () => {
-    console.log(
-      '🚀 Starting data sync with Angel and 🔥 store ',
-      commonPrint()
-    );
+  // At 05:00 on everyday.
+  Cron('0 0 5 * * *', async () => {
     cleanAllStrategies();
     initiateDataSync();
   });

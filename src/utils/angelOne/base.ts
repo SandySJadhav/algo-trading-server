@@ -535,7 +535,13 @@ class Angel {
     this.ACTIVE_STRATEGIES.splice(matched_index, 1);
     if (order.status) {
       console.log(
-        `🚀 Trade completed for ${matched_strategy.id}`,
+        `🚀 Trade completed for ${matched_strategy.id}. ${
+          this.ACTIVE_STRATEGIES[matched_index].profit_points > 0
+            ? 'Profit Points=' +
+              this.ACTIVE_STRATEGIES[matched_index].profit_points
+            : 'Loss Points=' +
+              this.ACTIVE_STRATEGIES[matched_index].profit_points
+        }`,
         commonPrint()
       );
       // unsubscribe from websocket listenings
