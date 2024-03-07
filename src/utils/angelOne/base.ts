@@ -578,8 +578,8 @@ class Angel {
 
     if (
       Number(hours + '.' + minutes) > matched_strategy.stop_entry_after ||
-      (type === 'CE' && ltp < matched_strategy.trailed_sl) ||
-      (type === 'PE' && ltp > matched_strategy.trailed_sl)
+      (type === 'CE' && ltp < matched_strategy.trailed_sl - 1) ||
+      (type === 'PE' && ltp > matched_strategy.trailed_sl + 1)
     ) {
       this.ACTIVE_STRATEGIES[matched_index].exit_price = ltp;
       // check stoploss
