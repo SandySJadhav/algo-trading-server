@@ -61,10 +61,6 @@ export const cleanAllStrategies = async () => {
 };
 
 export const fetchAllActiveStrategies = async () => {
-  console.log(
-    '🚀 Fetching all active strategies from 🔥 store ',
-    commonPrint()
-  );
   const strategies_colllection = Firebase.db.collection('strategies');
   const response = await strategies_colllection
     .where('status', '==', 'ACTIVE')
@@ -72,6 +68,7 @@ export const fetchAllActiveStrategies = async () => {
     .get();
 
   if (response.empty) {
+    console.log('🚀 No active strategies found!', commonPrint());
     return [];
   }
 
