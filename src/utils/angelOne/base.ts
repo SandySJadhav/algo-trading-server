@@ -103,6 +103,7 @@ class Angel {
    * Strategy timing checker and loader
    */
   async loadStrategies() {
+    console.log('🚀 Strategy loader croner executed!', commonPrint());
     // get all strategies from firestore
     const ALL_STRATEGIES = await fetchAllActiveStrategies();
     ALL_STRATEGIES.forEach((strategy: strategy_prop) => {
