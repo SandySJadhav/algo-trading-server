@@ -105,7 +105,6 @@ class Angel {
   async loadStrategies() {
     // get all strategies from firestore
     const ALL_STRATEGIES = await fetchAllActiveStrategies();
-
     ALL_STRATEGIES.forEach((strategy: strategy_prop) => {
       const strategy_already_running = this.ACTIVE_STRATEGIES.findIndex(
         (active_strategy) => active_strategy.id === strategy.id
@@ -116,8 +115,12 @@ class Angel {
       }
     });
     if (this.ACTIVE_STRATEGIES.length === 0) {
-      console.log(`🚀 No any active strategies found!`, commonPrint());
       return;
+    } else {
+      console.log(
+        `Total ${this.ACTIVE_STRATEGIES.length} active strategies found!`,
+        commonPrint()
+      );
     }
     // fetch candle history for above strategies
     const activeCandles = await this.getAllInstrumentCandleHistory();
@@ -130,7 +133,7 @@ class Angel {
   }
 
   async initiateLiveFeed() {
-    console.log('🚀 Initiate live feed ', commonPrint());
+    console.log('🚀 Initiate live market data feed ', commonPrint());
     // TODO - supported only mcx instruments for now
     const allMCXInstruments: string[] = [];
 
@@ -276,7 +279,7 @@ class Angel {
   initiateStrategyLoaderCroner() {
     console.log('🚀 Initializing strategy loader croner ', commonPrint());
     // Runs at every 15th minute past every hour from 9-23 on every day-of-week from Monday-Friday
-    let strategyScheduledTimer = '*/15 9-23 * * 1-5';
+    let strategyScheduledTimer = '*/15 9-22 * * 1-5';
     let strategyCronerMaxRuns;
     if (process.env.ENVIRONMENT === 'dev') {
       strategyCronerMaxRuns = 1;
@@ -286,10 +289,6 @@ class Angel {
       strategyScheduledTimer,
       { maxRuns: strategyCronerMaxRuns },
       async () => {
-        console.log(
-          '🚀 Strategy loader 15 minute croner execution Success 🥳 ',
-          commonPrint()
-        );
         // close old connections
         this.WS?.close?.();
         // trigger new strategy
@@ -579,8 +578,8 @@ class Angel {
 
     if (
       Number(hours + '.' + minutes) > matched_strategy.stop_entry_after ||
-      (type === 'CE' && ltp < matched_strategy.trailed_sl) ||
-      (type === 'PE' && ltp > matched_strategy.trailed_sl)
+      (type === 'CE' && ltp < matched_strategy.trailed_sl - 1) ||
+      (type === 'PE' && ltp > matched_strategy.trailed_sl + 1)
     ) {
       this.ACTIVE_STRATEGIES[matched_index].exit_price = ltp;
       // check stoploss
