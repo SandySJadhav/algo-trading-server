@@ -632,8 +632,10 @@ class Angel {
           commonPrint()
         );
       } else if (
-        ltp < matched_strategy.entry_price - 20 &&
-        matched_strategy.target_difference_points > 25 &&
+        ltp <
+          matched_strategy.entry_price -
+            matched_strategy.target_difference_points / 2 &&
+        matched_strategy.target_difference_points > 20 &&
         !matched_strategy.averaging_trade
       ) {
         // check if we need to average the option price here.
@@ -697,8 +699,10 @@ class Angel {
           commonPrint()
         );
       } else if (
-        ltp < matched_strategy.entry_price + 20 &&
-        matched_strategy.target_difference_points > 25 &&
+        ltp <
+          matched_strategy.entry_price +
+            matched_strategy.target_difference_points / 2 &&
+        matched_strategy.target_difference_points > 20 &&
         !matched_strategy.averaging_trade
       ) {
         // check if we need to average the option price here.
@@ -781,6 +785,7 @@ class Angel {
   }
 
   addCallCountdown(matched_index: number, entry_countdown_in_seconds: number) {
+    this.ACTIVE_STRATEGIES[matched_index].put_entry_countdown_status = 'IDLE';
     if (
       this.ACTIVE_STRATEGIES[matched_index].call_entry_countdown_status !==
       'INPROGRESS'
@@ -801,6 +806,7 @@ class Angel {
   }
 
   addPutCountdown(matched_index: number, entry_countdown_in_seconds: number) {
+    this.ACTIVE_STRATEGIES[matched_index].call_entry_countdown_status = 'IDLE';
     if (
       this.ACTIVE_STRATEGIES[matched_index].put_entry_countdown_status !==
       'INPROGRESS'
