@@ -16,7 +16,19 @@ const formatNumberInTime = (num: number): string => {
   return num > 9 ? num.toString() : '0' + num;
 };
 
+const getOrderType = (type: any) => {
+  if (type === 'CARRYFORWARD') {
+    return 'CARRYFORWARD';
+  } else if (type === 'INTRADAY') {
+    return 'INTRADAY';
+  }
+  return 'CARRYFORWARD';
+};
+
 class Angel {
+  producttype: 'CARRYFORWARD' | 'INTRADAY' = getOrderType(
+    process.env.PRODUCT_TYPE
+  );
   LOGIN_RETRY = 3;
   HEARTBEAT_CRON: any;
   LIVE_CRON: any;
@@ -519,7 +531,7 @@ class Angel {
         duration: 'DAY',
         exchange: instrument_to_trade?.exch_seg + '',
         ordertype: 'MARKET',
-        producttype: 'CARRYFORWARD',
+        producttype: this.producttype,
         quantity: String(
           Number(instrument_to_trade?.lotsize || 1) *
             this.ACTIVE_STRATEGIES[matched_index].lots
@@ -616,9 +628,38 @@ class Angel {
         this.ACTIVE_STRATEGIES[matched_index].trailed_sl =
           matched_strategy.achieved_target;
         console.log(
-          `🚀 Trade: ${matched_strategy.call_instrument_to_trade?.display_name}, SL updated: ${matched_strategy.trailed_sl} -> ${this.ACTIVE_STRATEGIES[matched_index].trailed_sl}`,
+          `🚀 Trade: ${matched_strategy.call_instrument_to_trade?.display_name}, SL updated: {${matched_strategy.trailed_sl} -> ${this.ACTIVE_STRATEGIES[matched_index].trailed_sl}}`,
           commonPrint()
         );
+      } else if (
+        ltp < matched_strategy.entry_price - 20 &&
+        !matched_strategy.averaging_trade
+      ) {
+        // check if we need to average the option price here.
+        this.ACTIVE_STRATEGIES[matched_index].averaging_trade = true;
+        placeOrder(
+          {
+            duration: 'DAY',
+            exchange: matched_strategy.call_instrument_to_trade?.exch_seg + '',
+            ordertype: 'MARKET',
+            producttype: this.producttype,
+            quantity: String(
+              Number(matched_strategy.call_instrument_to_trade?.lotsize || 1) *
+                this.ACTIVE_STRATEGIES[matched_index].lots
+            ),
+            variety: 'NORMAL',
+            transactiontype: 'BUY',
+            symboltoken: matched_strategy.call_instrument_to_trade?.token,
+            tradingsymbol:
+              matched_strategy.call_instrument_to_trade?.symbol + ''
+          },
+          this.headers,
+          this.ACTIVE_STRATEGIES[matched_index]
+        ).then((order) => {
+          if (order.status) {
+            this.ACTIVE_STRATEGIES[matched_index].lots *= 2;
+          }
+        });
       }
     } else if (type === 'PE') {
       if (ltp <= matched_strategy.target) {
@@ -647,9 +688,37 @@ class Angel {
         this.ACTIVE_STRATEGIES[matched_index].trailed_sl =
           matched_strategy.achieved_target;
         console.log(
-          `🚀 Trade: ${matched_strategy.call_instrument_to_trade?.display_name}, SL updated: ${matched_strategy.trailed_sl} -> ${this.ACTIVE_STRATEGIES[matched_index].trailed_sl}`,
+          `🚀 Trade: ${matched_strategy.call_instrument_to_trade?.display_name}, SL updated: {${matched_strategy.trailed_sl} -> ${this.ACTIVE_STRATEGIES[matched_index].trailed_sl}}`,
           commonPrint()
         );
+      } else if (
+        ltp < matched_strategy.entry_price + 20 &&
+        !matched_strategy.averaging_trade
+      ) {
+        // check if we need to average the option price here.
+        this.ACTIVE_STRATEGIES[matched_index].averaging_trade = true;
+        placeOrder(
+          {
+            duration: 'DAY',
+            exchange: matched_strategy.put_instrument_to_trade?.exch_seg + '',
+            ordertype: 'MARKET',
+            producttype: this.producttype,
+            quantity: String(
+              Number(matched_strategy.put_instrument_to_trade?.lotsize || 1) *
+                this.ACTIVE_STRATEGIES[matched_index].lots
+            ),
+            variety: 'NORMAL',
+            transactiontype: 'BUY',
+            symboltoken: matched_strategy.put_instrument_to_trade?.token,
+            tradingsymbol: matched_strategy.put_instrument_to_trade?.symbol + ''
+          },
+          this.headers,
+          this.ACTIVE_STRATEGIES[matched_index]
+        ).then((order) => {
+          if (order.status) {
+            this.ACTIVE_STRATEGIES[matched_index].lots *= 2;
+          }
+        });
       }
     }
   }
@@ -676,7 +745,7 @@ class Angel {
         duration: 'DAY',
         exchange: instrument_to_trade?.exch_seg + '',
         ordertype: 'MARKET',
-        producttype: 'CARRYFORWARD',
+        producttype: this.producttype,
         quantity: String(
           Number(instrument_to_trade?.lotsize || 1) *
             this.ACTIVE_STRATEGIES[matched_index].lots

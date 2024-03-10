@@ -57,6 +57,7 @@ export interface strategy_prop {
   target: number;
   target_difference_points: number;
   achieved_target: number;
+  averaging_trade: boolean;
 
   // entry countdowns
   call_entry_countdown_status: 'IDLE' | 'INPROGRESS' | 'COMPLETE';

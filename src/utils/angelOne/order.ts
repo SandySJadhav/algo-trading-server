@@ -7,7 +7,7 @@ type Order = {
   variety: 'NORMAL'; // | "STOPLOSS" | "AMO" | "ROBO";
   transactiontype: 'BUY' | 'SELL';
   ordertype: 'MARKET'; // | "LIMIT" | "STOPLOSS_LIMIT" | "STOPLOSS_MARKET";
-  producttype: 'CARRYFORWARD'; // "DELIVERY" | "CARRYFORWARD" | "MARGIN" | "INTRADAY" | "BO";
+  producttype: 'CARRYFORWARD' | 'INTRADAY'; // "DELIVERY" | "CARRYFORWARD" | "MARGIN" | "INTRADAY" | "BO";
   duration: 'DAY'; // | "IOC";
   exchange: string; //"BSE" | "NFO" | "NSE" | "BFO" | "CDS";
   tradingsymbol: string;
