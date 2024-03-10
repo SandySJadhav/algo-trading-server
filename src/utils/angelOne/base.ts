@@ -781,6 +781,7 @@ class Angel {
   }
 
   addCallCountdown(matched_index: number, entry_countdown_in_seconds: number) {
+    this.ACTIVE_STRATEGIES[matched_index].put_entry_countdown_status = 'IDLE';
     if (
       this.ACTIVE_STRATEGIES[matched_index].call_entry_countdown_status !==
       'INPROGRESS'
@@ -801,6 +802,7 @@ class Angel {
   }
 
   addPutCountdown(matched_index: number, entry_countdown_in_seconds: number) {
+    this.ACTIVE_STRATEGIES[matched_index].call_entry_countdown_status = 'IDLE';
     if (
       this.ACTIVE_STRATEGIES[matched_index].put_entry_countdown_status !==
       'INPROGRESS'
