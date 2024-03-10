@@ -6,7 +6,7 @@ const verifyToken = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { authorization } = req.headers;
     if (authorization) {
-      const idToken = (authorization + '').split(' ')?.[1];
+      const idToken = String(authorization).split(' ')?.[1];
       if (idToken) {
         // idToken comes from the client app
         const { exp } = await Firebase.auth.verifyIdToken(idToken);

@@ -67,8 +67,8 @@ const formatPayload = ({
 
   if (exch_seg !== 'NSE') {
     // stocks don't have expiry
-    if (!keywordExists(rel_keywords, payload.date + '')) {
-      rel_keywords.push(payload.date + ''); // 07
+    if (!keywordExists(rel_keywords, String(payload.date))) {
+      rel_keywords.push(String(payload.date)); // 07
       display_name += ' ' + payload.date;
     }
     if (
@@ -78,8 +78,8 @@ const formatPayload = ({
       rel_keywords.push(MONTHS[payload.month]); // JAN
       display_name += ' ' + MONTHS[payload.month];
     }
-    if (!keywordExists(rel_keywords, expiryDate.year() + '')) {
-      rel_keywords.push(expiryDate.year() + ''); // 2024
+    if (!keywordExists(rel_keywords, String(expiryDate.year()))) {
+      rel_keywords.push(String(expiryDate.year())); // 2024
       display_name += ' ' + expiryDate.year();
     }
     if (['FUTCOM', 'FUTSTK', 'FUTIDX'].includes(instrumenttype)) {

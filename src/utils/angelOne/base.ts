@@ -55,8 +55,8 @@ class Angel {
   };
 
   constructor() {
-    this.USERID = process.env.ANGEL_USERID + '';
-    this.PWD = process.env.ANGEL_PWD + '';
+    this.USERID = String(process.env.ANGEL_USERID);
+    this.PWD = String(process.env.ANGEL_PWD);
     this.WS_WATCH_LIST_PAYLOADS = [];
     this.headers = {
       'Content-Type': 'application/json',
@@ -75,9 +75,9 @@ class Angel {
         console.log('🔥 Failed to get address...', err);
       }
       this.headers['X-ClientLocalIP'] =
-        addrs !== undefined ? addrs.ip + '' : '192.168.168.168';
+        addrs !== undefined ? String(addrs.ip) : '192.168.168.168';
       this.headers['X-MACAddress'] =
-        addrs !== undefined ? addrs.mac + '' : 'fe80::216e:6507:4b90:3719';
+        addrs !== undefined ? String(addrs.mac) : 'fe80::216e:6507:4b90:3719';
       // initiate login process
       this.login();
     });
@@ -529,7 +529,7 @@ class Angel {
     const order = await placeOrder(
       {
         duration: 'DAY',
-        exchange: instrument_to_trade?.exch_seg + '',
+        exchange: String(instrument_to_trade?.exch_seg),
         ordertype: 'MARKET',
         producttype: this.producttype,
         quantity: String(
@@ -539,7 +539,7 @@ class Angel {
         variety: 'NORMAL',
         transactiontype: 'SELL',
         symboltoken: instrument_to_trade?.token,
-        tradingsymbol: instrument_to_trade?.symbol + ''
+        tradingsymbol: String(instrument_to_trade?.symbol)
       },
       this.headers,
       this.ACTIVE_STRATEGIES[matched_index]
@@ -640,7 +640,9 @@ class Angel {
         placeOrder(
           {
             duration: 'DAY',
-            exchange: matched_strategy.call_instrument_to_trade?.exch_seg + '',
+            exchange: String(
+              matched_strategy.call_instrument_to_trade?.exch_seg
+            ),
             ordertype: 'MARKET',
             producttype: this.producttype,
             quantity: String(
@@ -650,8 +652,9 @@ class Angel {
             variety: 'NORMAL',
             transactiontype: 'BUY',
             symboltoken: matched_strategy.call_instrument_to_trade?.token,
-            tradingsymbol:
-              matched_strategy.call_instrument_to_trade?.symbol + ''
+            tradingsymbol: String(
+              matched_strategy.call_instrument_to_trade?.symbol
+            )
           },
           this.headers,
           this.ACTIVE_STRATEGIES[matched_index]
@@ -700,7 +703,9 @@ class Angel {
         placeOrder(
           {
             duration: 'DAY',
-            exchange: matched_strategy.put_instrument_to_trade?.exch_seg + '',
+            exchange: String(
+              matched_strategy.put_instrument_to_trade?.exch_seg
+            ),
             ordertype: 'MARKET',
             producttype: this.producttype,
             quantity: String(
@@ -710,7 +715,9 @@ class Angel {
             variety: 'NORMAL',
             transactiontype: 'BUY',
             symboltoken: matched_strategy.put_instrument_to_trade?.token,
-            tradingsymbol: matched_strategy.put_instrument_to_trade?.symbol + ''
+            tradingsymbol: String(
+              matched_strategy.put_instrument_to_trade?.symbol
+            )
           },
           this.headers,
           this.ACTIVE_STRATEGIES[matched_index]
@@ -743,7 +750,7 @@ class Angel {
     const order = await placeOrder(
       {
         duration: 'DAY',
-        exchange: instrument_to_trade?.exch_seg + '',
+        exchange: String(instrument_to_trade?.exch_seg),
         ordertype: 'MARKET',
         producttype: this.producttype,
         quantity: String(
@@ -753,7 +760,7 @@ class Angel {
         variety: 'NORMAL',
         transactiontype: 'BUY',
         symboltoken: instrument_to_trade?.token,
-        tradingsymbol: instrument_to_trade?.symbol + ''
+        tradingsymbol: String(instrument_to_trade?.symbol)
       },
       this.headers,
       this.ACTIVE_STRATEGIES[matched_index]
