@@ -520,10 +520,10 @@ class Angel {
         exchange: instrument_to_trade?.exch_seg + '',
         ordertype: 'MARKET',
         producttype: 'CARRYFORWARD',
-        quantity:
+        quantity: String(
           Number(instrument_to_trade?.lotsize || 1) *
-            this.ACTIVE_STRATEGIES[matched_index].lots +
-          '',
+            this.ACTIVE_STRATEGIES[matched_index].lots
+        ),
         variety: 'NORMAL',
         transactiontype: 'SELL',
         symboltoken: instrument_to_trade?.token,
@@ -564,6 +564,7 @@ class Angel {
         }
       };
       this.WS.send(JSON.stringify(payload));
+      console.log(`🚀 Trade completed for strategy: ${matched_strategy.id}`);
     } else {
       console.log(`🔥 failed to exit strategy ${matched_strategy.id}`);
     }
@@ -601,7 +602,7 @@ class Angel {
           this.ACTIVE_STRATEGIES[matched_index].achieved_target -
           matched_strategy.trailing_sl_points;
         console.log(
-          `🚀 Trailing sl for ${matched_strategy.id} -> Trade: ${type}, Target achieved: ${ltp}, Old SL: ${matched_strategy.trailed_sl}, New SL: ${this.ACTIVE_STRATEGIES[matched_index].trailed_sl} `,
+          `🚀 Trade: ${matched_strategy.call_instrument_to_trade?.display_name}, Target updated: {${this.ACTIVE_STRATEGIES[matched_index].achieved_target} -> ${this.ACTIVE_STRATEGIES[matched_index].target}}, SL updated: {${matched_strategy.trailed_sl} -> ${this.ACTIVE_STRATEGIES[matched_index].trailed_sl}}`,
           commonPrint()
         );
       } else if (
@@ -615,7 +616,7 @@ class Angel {
         this.ACTIVE_STRATEGIES[matched_index].trailed_sl =
           matched_strategy.achieved_target;
         console.log(
-          `🚀 Trailing sl for ${matched_strategy.id} -> Trade: ${type}, LTP: ${ltp}, Old SL: ${matched_strategy.trailed_sl}, New SL: ${this.ACTIVE_STRATEGIES[matched_index].trailed_sl} `,
+          `🚀 Trade: ${matched_strategy.call_instrument_to_trade?.display_name}, SL updated: ${matched_strategy.trailed_sl} -> ${this.ACTIVE_STRATEGIES[matched_index].trailed_sl}`,
           commonPrint()
         );
       }
@@ -632,7 +633,7 @@ class Angel {
           this.ACTIVE_STRATEGIES[matched_index].achieved_target +
           matched_strategy.trailing_sl_points;
         console.log(
-          `🚀 Trailing sl for ${matched_strategy.id} -> Trade: ${type}, Target achieved: ${ltp}, Old SL: ${matched_strategy.trailed_sl}, New SL: ${this.ACTIVE_STRATEGIES[matched_index].trailed_sl} `,
+          `🚀 Trade: ${matched_strategy.call_instrument_to_trade?.display_name}, Target updated: {${this.ACTIVE_STRATEGIES[matched_index].achieved_target} -> ${this.ACTIVE_STRATEGIES[matched_index].target}}, SL updated: {${matched_strategy.trailed_sl} -> ${this.ACTIVE_STRATEGIES[matched_index].trailed_sl}}`,
           commonPrint()
         );
       } else if (
@@ -646,7 +647,7 @@ class Angel {
         this.ACTIVE_STRATEGIES[matched_index].trailed_sl =
           matched_strategy.achieved_target;
         console.log(
-          `🚀 Trailing sl for ${matched_strategy.id} -> Trade: ${type}, LTP: ${ltp}, Old SL: ${matched_strategy.trailed_sl}, New SL: ${this.ACTIVE_STRATEGIES[matched_index].trailed_sl} `,
+          `🚀 Trade: ${matched_strategy.call_instrument_to_trade?.display_name}, SL updated: ${matched_strategy.trailed_sl} -> ${this.ACTIVE_STRATEGIES[matched_index].trailed_sl}`,
           commonPrint()
         );
       }
@@ -658,10 +659,6 @@ class Angel {
     this.ACTIVE_STRATEGIES[matched_index].order_status = 'PENDING';
     this.ACTIVE_STRATEGIES[matched_index].trade_type = type;
 
-    console.log(
-      `🚀 ${type} Order placement criteria met for strategy ${this.ACTIVE_STRATEGIES[matched_index].id}`,
-      commonPrint()
-    );
     const instrument_to_trade =
       type === 'CE'
         ? this.ACTIVE_STRATEGIES[matched_index].call_instrument_to_trade
@@ -669,16 +666,21 @@ class Angel {
 
     this.ACTIVE_STRATEGIES[matched_index].order_status = 'PLACED';
 
+    console.log(
+      `🚀 Placing order ${instrument_to_trade?.display_name} for strategy ${this.ACTIVE_STRATEGIES[matched_index].id}`,
+      commonPrint()
+    );
+
     const order = await placeOrder(
       {
         duration: 'DAY',
         exchange: instrument_to_trade?.exch_seg + '',
         ordertype: 'MARKET',
         producttype: 'CARRYFORWARD',
-        quantity:
+        quantity: String(
           Number(instrument_to_trade?.lotsize || 1) *
-            this.ACTIVE_STRATEGIES[matched_index].lots +
-          '',
+            this.ACTIVE_STRATEGIES[matched_index].lots
+        ),
         variety: 'NORMAL',
         transactiontype: 'BUY',
         symboltoken: instrument_to_trade?.token,
