@@ -79,8 +79,8 @@ export const fetchAllActiveStrategies = async () => {
 
     response.forEach(async (res: any) => {
       const resData: strategy_prop = res.data();
-      if (ids.indexOf(resData.instrument_to_watch.id + '') === -1) {
-        ids.push(resData.instrument_to_watch.id + '');
+      if (ids.indexOf(String(resData.instrument_to_watch.id)) === -1) {
+        ids.push(String(resData.instrument_to_watch.id));
       }
       resData.id = res.id;
       data.push(resData);
