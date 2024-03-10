@@ -632,8 +632,10 @@ class Angel {
           commonPrint()
         );
       } else if (
-        ltp < matched_strategy.entry_price - 20 &&
-        matched_strategy.target_difference_points > 25 &&
+        ltp <
+          matched_strategy.entry_price -
+            matched_strategy.target_difference_points / 2 &&
+        matched_strategy.target_difference_points > 20 &&
         !matched_strategy.averaging_trade
       ) {
         // check if we need to average the option price here.
@@ -697,8 +699,10 @@ class Angel {
           commonPrint()
         );
       } else if (
-        ltp < matched_strategy.entry_price + 20 &&
-        matched_strategy.target_difference_points > 25 &&
+        ltp <
+          matched_strategy.entry_price +
+            matched_strategy.target_difference_points / 2 &&
+        matched_strategy.target_difference_points > 20 &&
         !matched_strategy.averaging_trade
       ) {
         // check if we need to average the option price here.
