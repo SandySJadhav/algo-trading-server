@@ -850,7 +850,7 @@ class Angel {
       if (ltp >= CEEntry) {
         if (matched_strategy.call_entry_countdown_status !== 'COMPLETE') {
           // allow entry only after 2 minutes of candle sustaining above entry point
-          if (ltp <= CEEntry + matched_strategy.buffer_points) {
+          if (ltp < CEEntry + matched_strategy.buffer_points) {
             // cuntdown should start only if ltp is around our bying price.
             return this.addCallCountdown(
               matched_index,
@@ -889,7 +889,6 @@ class Angel {
               matched_strategy.entry_countdown_in_seconds
             );
           }
-          console.log(`🚀 Countdown in progress for ${matched_strategy.id}`);
           return;
         }
         // Place order now
