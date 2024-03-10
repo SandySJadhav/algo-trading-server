@@ -633,10 +633,12 @@ class Angel {
         );
       } else if (
         ltp < matched_strategy.entry_price - 20 &&
+        matched_strategy.target_difference_points > 25 &&
         !matched_strategy.averaging_trade
       ) {
         // check if we need to average the option price here.
         this.ACTIVE_STRATEGIES[matched_index].averaging_trade = true;
+        this.ACTIVE_STRATEGIES[matched_index].lots *= 2;
         placeOrder(
           {
             duration: 'DAY',
@@ -647,7 +649,7 @@ class Angel {
             producttype: this.producttype,
             quantity: String(
               Number(matched_strategy.call_instrument_to_trade?.lotsize || 1) *
-                this.ACTIVE_STRATEGIES[matched_index].lots
+                matched_strategy.lots
             ),
             variety: 'NORMAL',
             transactiontype: 'BUY',
@@ -659,8 +661,8 @@ class Angel {
           this.headers,
           this.ACTIVE_STRATEGIES[matched_index]
         ).then((order) => {
-          if (order.status) {
-            this.ACTIVE_STRATEGIES[matched_index].lots *= 2;
+          if (!order.status) {
+            this.ACTIVE_STRATEGIES[matched_index].lots /= 2;
           }
         });
       }
@@ -696,10 +698,12 @@ class Angel {
         );
       } else if (
         ltp < matched_strategy.entry_price + 20 &&
+        matched_strategy.target_difference_points > 25 &&
         !matched_strategy.averaging_trade
       ) {
         // check if we need to average the option price here.
         this.ACTIVE_STRATEGIES[matched_index].averaging_trade = true;
+        this.ACTIVE_STRATEGIES[matched_index].lots *= 2;
         placeOrder(
           {
             duration: 'DAY',
@@ -710,7 +714,7 @@ class Angel {
             producttype: this.producttype,
             quantity: String(
               Number(matched_strategy.put_instrument_to_trade?.lotsize || 1) *
-                this.ACTIVE_STRATEGIES[matched_index].lots
+                matched_strategy.lots
             ),
             variety: 'NORMAL',
             transactiontype: 'BUY',
@@ -722,8 +726,8 @@ class Angel {
           this.headers,
           this.ACTIVE_STRATEGIES[matched_index]
         ).then((order) => {
-          if (order.status) {
-            this.ACTIVE_STRATEGIES[matched_index].lots *= 2;
+          if (!order.status) {
+            this.ACTIVE_STRATEGIES[matched_index].lots /= 2;
           }
         });
       }
