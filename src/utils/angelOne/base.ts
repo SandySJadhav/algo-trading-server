@@ -668,6 +668,9 @@ class Angel {
         ).then((order) => {
           if (order.status) {
             this.ACTIVE_STRATEGIES[matched_index].lots *= 2;
+            console.log(
+              `Old lot size: ${matched_strategy.lots}, New lot size: ${this.ACTIVE_STRATEGIES[matched_index].lots}`
+            );
           }
         });
       }
@@ -734,6 +737,9 @@ class Angel {
         ).then((order) => {
           if (order.status) {
             this.ACTIVE_STRATEGIES[matched_index].lots *= 2;
+            console.log(
+              `Old lot size: ${matched_strategy.lots}, New lot size: ${this.ACTIVE_STRATEGIES[matched_index].lots}`
+            );
           }
         });
       }
