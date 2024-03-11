@@ -62,8 +62,6 @@ export const forceKillOrders = () => {
 
 export const backtest = async () => {
   console.log('🚀 Backtesting');
-  const backtestAngel = new Angel();
-
 };
 
 export default AngelLogin;
