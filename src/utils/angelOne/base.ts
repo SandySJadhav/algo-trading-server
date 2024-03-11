@@ -882,15 +882,15 @@ class Angel {
         }
         // place order
         if (
-          ltp <
+          ltp >
           CEEntry +
             this.ACTIVE_STRATEGIES[matched_index].target_difference_points / 2
         ) {
-          return this.placeMarketOrder('CE', matched_index);
-        } else {
           console.log(
             `🚀 LTP gone higher than our entry. LTP: ${ltp}, Entry: ${CEEntry}`
           );
+        } else {
+          return this.placeMarketOrder('CE', matched_index);
         }
       } else if (ltp <= PEEntry) {
         if (matched_strategy.put_entry_countdown_status !== 'COMPLETE') {
@@ -924,15 +924,15 @@ class Angel {
         }
         // place order
         if (
-          ltp >
+          ltp <
           PEEntry -
             this.ACTIVE_STRATEGIES[matched_index].target_difference_points / 2
         ) {
-          return this.placeMarketOrder('PE', matched_index);
-        } else {
           console.log(
             `🚀 LTP gone higher than our entry. LTP: ${ltp}, Entry: ${PEEntry}`
           );
+        } else {
+          return this.placeMarketOrder('PE', matched_index);
         }
       }
     } else {
