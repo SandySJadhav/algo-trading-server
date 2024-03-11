@@ -82,3 +82,7 @@ export const _atos = (array: any) => {
   const token: string = JSON.stringify(newarray.join(''));
   return token.replace(/\\u0000/g, '');
 };
+
+export const formatNumberInTime = (num: number): string => {
+  return num > 9 ? num.toString() : '0' + num;
+};
