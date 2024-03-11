@@ -35,7 +35,7 @@ export const placeOrder = async (
   headers: any,
   matched_strategy: strategy_prop
 ) => {
-  if (process.env.ENVIRONMENT === 'DEV') {
+  if (process.env.ENVIRONMENT !== 'PRODUCTION') {
     console.log('🚀 Skipping order placement in local!');
     return {
       data: {},
