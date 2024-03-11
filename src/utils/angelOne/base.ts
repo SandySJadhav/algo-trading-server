@@ -131,7 +131,7 @@ class Angel {
       return;
     } else {
       console.log(
-        `Total ${this.ACTIVE_STRATEGIES.length} active strategies found!`,
+        `🚀 Total ${this.ACTIVE_STRATEGIES.length} active strategies found 🏄!`,
         commonPrint()
       );
     }
