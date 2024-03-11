@@ -605,9 +605,7 @@ class Angel {
       // check stoploss
       console.log(`🚀 SL hit for ${matched_strategy.id} `, commonPrint());
       return this.exitOrder(matched_index);
-    }
-    // check for target, increase the sl
-    if (type === 'CE') {
+    } else if (type === 'CE') {
       if (ltp >= matched_strategy.target) {
         // set target achieved
         this.ACTIVE_STRATEGIES[matched_index].achieved_target =
@@ -884,7 +882,7 @@ class Angel {
         }
         // place order
         if (
-          ltp >
+          ltp <
           CEEntry +
             this.ACTIVE_STRATEGIES[matched_index].target_difference_points / 2
         ) {
@@ -926,7 +924,7 @@ class Angel {
         }
         // place order
         if (
-          ltp <
+          ltp >
           PEEntry -
             this.ACTIVE_STRATEGIES[matched_index].target_difference_points / 2
         ) {
