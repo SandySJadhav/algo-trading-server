@@ -676,6 +676,8 @@ class Angel {
         ).then((order) => {
           if (!order.status) {
             this.ACTIVE_STRATEGIES[matched_index].averaging_trade = false;
+          } else {
+            console.log(`🚀 Averaging trade is taken at ltp ${ltp}`);
           }
         });
       }
@@ -742,6 +744,8 @@ class Angel {
         ).then((order) => {
           if (!order.status) {
             this.ACTIVE_STRATEGIES[matched_index].averaging_trade = false;
+          } else {
+            console.log(`🚀 Averaging trade is taken at ltp ${ltp}`);
           }
         });
       }
