@@ -7,14 +7,16 @@ import { postRequest } from '../http.interceptor';
 import { fetchAllActiveStrategies } from '../firebase/strategies';
 import { Parser } from 'binary-parser';
 import { instrument_prop, ltp_prop, strategy_prop } from '../types';
-import { _atos, commonPrint, getISTTime, toNumber } from '../helpers';
+import {
+  _atos,
+  commonPrint,
+  formatNumberInTime,
+  getISTTime,
+  toNumber
+} from '../helpers';
 import generateTOTP from '../totp/base';
 import { placeOrder } from './order';
 import { getSearchTerm, searchInFirestore } from '../firebase/search';
-
-const formatNumberInTime = (num: number): string => {
-  return num > 9 ? num.toString() : '0' + num;
-};
 
 const getOrderType = (type: any) => {
   if (type === 'CARRYFORWARD') {
@@ -532,6 +534,13 @@ class Angel {
       this.ACTIVE_STRATEGIES[matched_index].put_entry_countdown_status = 'IDLE';
     }
     this.ACTIVE_STRATEGIES[matched_index].order_status = 'COMPLETED';
+
+    const lotsToExit = this.ACTIVE_STRATEGIES[matched_index].averaging_trade
+      ? this.ACTIVE_STRATEGIES[matched_index].lots * 2
+      : this.ACTIVE_STRATEGIES[matched_index].lots;
+
+    console.log(`🚀 Lots to exit ${lotsToExit}`);
+
     const order = await placeOrder(
       {
         duration: 'DAY',
@@ -539,8 +548,7 @@ class Angel {
         ordertype: 'MARKET',
         producttype: this.producttype,
         quantity: String(
-          Number(instrument_to_trade?.lotsize || 1) *
-            this.ACTIVE_STRATEGIES[matched_index].lots
+          Number(instrument_to_trade?.lotsize || 1) * lotsToExit
         ),
         variety: 'NORMAL',
         transactiontype: 'SELL',
@@ -666,11 +674,10 @@ class Angel {
           this.headers,
           this.ACTIVE_STRATEGIES[matched_index]
         ).then((order) => {
-          if (order.status) {
-            this.ACTIVE_STRATEGIES[matched_index].lots *= 2;
-            console.log(
-              `Old lot size: ${matched_strategy.lots}, New lot size: ${this.ACTIVE_STRATEGIES[matched_index].lots}`
-            );
+          if (!order.status) {
+            this.ACTIVE_STRATEGIES[matched_index].averaging_trade = false;
+          } else {
+            console.log(`🚀 Averaging trade is taken at ltp ${ltp}`);
           }
         });
       }
@@ -735,11 +742,10 @@ class Angel {
           this.headers,
           this.ACTIVE_STRATEGIES[matched_index]
         ).then((order) => {
-          if (order.status) {
-            this.ACTIVE_STRATEGIES[matched_index].lots *= 2;
-            console.log(
-              `Old lot size: ${matched_strategy.lots}, New lot size: ${this.ACTIVE_STRATEGIES[matched_index].lots}`
-            );
+          if (!order.status) {
+            this.ACTIVE_STRATEGIES[matched_index].averaging_trade = false;
+          } else {
+            console.log(`🚀 Averaging trade is taken at ltp ${ltp}`);
           }
         });
       }

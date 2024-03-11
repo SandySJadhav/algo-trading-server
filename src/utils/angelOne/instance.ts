@@ -1,6 +1,6 @@
 import Cron from 'croner';
 import Angel from './base';
-import { commonPrint } from '../helpers';
+import { commonPrint, formatNumberInTime, getISTTime } from '../helpers';
 
 let angelInstance: Angel | null;
 
@@ -60,8 +60,37 @@ export const forceKillOrders = () => {
   }
 };
 
-export const backtest = async () => {
+export const backtest = async ({ numberOfDays = 1 }) => {
   console.log('🚀 Backtesting');
+  const backtestAngel = new Angel();
+
+  const newDate = getISTTime();
+
+  // loop from here
+  const day = newDate.date();
+  const month = newDate.month();
+  const year = newDate.year();
+
+  const candle_to_watch_start_at = 18;
+  const start_entry_after = 18.3;
+
+  const entryTimeData = String(start_entry_after).split('.');
+  const entryHour = entryTimeData[0];
+  const entryMinute = entryTimeData[1];
+
+  const fromdate = `${year}-${formatNumberInTime(
+    month + 1
+  )}-${formatNumberInTime(day)} ${
+    formatNumberInTime(candle_to_watch_start_at) +
+    ':' +
+    formatNumberInTime(Number(entryMinute || '0'))
+  }`;
+
+  const todate = `${year}-${formatNumberInTime(
+    month + 1
+  )}-${formatNumberInTime(day)} ${formatNumberInTime(
+    start_entry_after - 1
+  )}:${formatNumberInTime(59)}`;
 };
 
 export default AngelLogin;
