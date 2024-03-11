@@ -605,9 +605,7 @@ class Angel {
       // check stoploss
       console.log(`🚀 SL hit for ${matched_strategy.id} `, commonPrint());
       return this.exitOrder(matched_index);
-    }
-    // check for target, increase the sl
-    if (type === 'CE') {
+    } else if (type === 'CE') {
       if (ltp >= matched_strategy.target) {
         // set target achieved
         this.ACTIVE_STRATEGIES[matched_index].achieved_target =
@@ -704,7 +702,7 @@ class Angel {
           commonPrint()
         );
       } else if (
-        ltp <
+        ltp >
           matched_strategy.entry_price +
             matched_strategy.target_difference_points / 2 &&
         matched_strategy.target_difference_points > 20 &&
@@ -888,11 +886,11 @@ class Angel {
           CEEntry +
             this.ACTIVE_STRATEGIES[matched_index].target_difference_points / 2
         ) {
-          return this.placeMarketOrder('CE', matched_index);
-        } else {
           console.log(
             `🚀 LTP gone higher than our entry. LTP: ${ltp}, Entry: ${CEEntry}`
           );
+        } else {
+          return this.placeMarketOrder('CE', matched_index);
         }
       } else if (ltp <= PEEntry) {
         if (matched_strategy.put_entry_countdown_status !== 'COMPLETE') {
@@ -930,11 +928,11 @@ class Angel {
           PEEntry -
             this.ACTIVE_STRATEGIES[matched_index].target_difference_points / 2
         ) {
-          return this.placeMarketOrder('PE', matched_index);
-        } else {
           console.log(
             `🚀 LTP gone higher than our entry. LTP: ${ltp}, Entry: ${PEEntry}`
           );
+        } else {
+          return this.placeMarketOrder('PE', matched_index);
         }
       }
     } else {

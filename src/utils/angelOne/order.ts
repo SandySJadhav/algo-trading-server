@@ -35,6 +35,13 @@ export const placeOrder = async (
   headers: any,
   matched_strategy: strategy_prop
 ) => {
+  if (process.env.ENVIRONMENT !== 'PRODUCTION') {
+    console.log('🚀 Skipping order placement in local!');
+    return {
+      data: {},
+      status: true
+    };
+  }
   const response: OrderResponse = await postRequest(
     API.root + API.order_place,
     params,
