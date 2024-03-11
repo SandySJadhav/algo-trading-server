@@ -702,7 +702,7 @@ class Angel {
           commonPrint()
         );
       } else if (
-        ltp <
+        ltp >
           matched_strategy.entry_price +
             matched_strategy.target_difference_points / 2 &&
         matched_strategy.target_difference_points > 20 &&
