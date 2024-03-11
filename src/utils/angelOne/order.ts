@@ -1,4 +1,5 @@
 import { updateOrderStatus } from '../firebase/strategies';
+import { commonPrint } from '../helpers';
 import { postRequest } from '../http.interceptor';
 import { strategy_prop } from '../types';
 import API from './api';
@@ -39,10 +40,10 @@ export const placeOrder = async (
     params,
     headers
   );
-  console.log(response);
   let data: any = {
     ...params,
-    strategy_id: matched_strategy.id
+    strategy_id: matched_strategy.id,
+    time: commonPrint()
   };
   if (response.status) {
     data = {
@@ -60,6 +61,6 @@ export const placeOrder = async (
       data
     );
   }
-
+  console.log(data);
   return response;
 };
