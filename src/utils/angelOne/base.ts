@@ -640,7 +640,6 @@ class Angel {
       ) {
         // check if we need to average the option price here.
         this.ACTIVE_STRATEGIES[matched_index].averaging_trade = true;
-        this.ACTIVE_STRATEGIES[matched_index].lots *= 2;
         placeOrder(
           {
             duration: 'DAY',
@@ -663,8 +662,8 @@ class Angel {
           this.headers,
           this.ACTIVE_STRATEGIES[matched_index]
         ).then((order) => {
-          if (!order.status) {
-            this.ACTIVE_STRATEGIES[matched_index].lots /= 2;
+          if (order.status) {
+            this.ACTIVE_STRATEGIES[matched_index].lots *= 2;
           }
         });
       }
@@ -707,7 +706,6 @@ class Angel {
       ) {
         // check if we need to average the option price here.
         this.ACTIVE_STRATEGIES[matched_index].averaging_trade = true;
-        this.ACTIVE_STRATEGIES[matched_index].lots *= 2;
         placeOrder(
           {
             duration: 'DAY',
@@ -730,8 +728,8 @@ class Angel {
           this.headers,
           this.ACTIVE_STRATEGIES[matched_index]
         ).then((order) => {
-          if (!order.status) {
-            this.ACTIVE_STRATEGIES[matched_index].lots /= 2;
+          if (order.status) {
+            this.ACTIVE_STRATEGIES[matched_index].lots *= 2;
           }
         });
       }

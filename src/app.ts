@@ -4,6 +4,7 @@ import { config } from 'dotenv';
 config();
 import { startCronerToSyncInstruments } from './utils/firebase/base';
 import heartBeatRouter from './routes/index';
+import backtestRouter from './routes/backtest';
 import AngelLogin, { forceKillOrders } from './utils/angelOne/instance';
 
 // region: 'asia-south1,
@@ -14,6 +15,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/', heartBeatRouter);
+app.use('/backtest', backtestRouter);
 
 // catch 404
 app.use(function (req, res) {
