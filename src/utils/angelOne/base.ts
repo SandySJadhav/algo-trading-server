@@ -503,6 +503,12 @@ class Angel {
         );
         return;
       }
+    } else if (max_entries_per_day < entries_taken_today) {
+      this.ACTIVE_STRATEGIES.splice(matched_index, 1);
+      console.log(
+        `🔥 Trades completed for ${matched_strategy.id}`,
+        commonPrint()
+      );
     }
   }
 
@@ -877,7 +883,17 @@ class Angel {
           this.ACTIVE_STRATEGIES[matched_index].trailed_sl = CEEntry - 30;
         }
         // place order
-        return this.placeMarketOrder('CE', matched_index);
+        if (
+          ltp >
+          CEEntry +
+            this.ACTIVE_STRATEGIES[matched_index].target_difference_points / 2
+        ) {
+          return this.placeMarketOrder('CE', matched_index);
+        } else {
+          console.log(
+            `🚀 LTP gone higher than our entry. LTP: ${ltp}, Entry: ${CEEntry}`
+          );
+        }
       } else if (ltp <= PEEntry) {
         if (matched_strategy.put_entry_countdown_status !== 'COMPLETE') {
           // allow entry only after 2 minutes of candle sustaining below entry point
@@ -909,7 +925,17 @@ class Angel {
           this.ACTIVE_STRATEGIES[matched_index].trailed_sl = PEEntry + 30;
         }
         // place order
-        return this.placeMarketOrder('PE', matched_index);
+        if (
+          ltp <
+          PEEntry -
+            this.ACTIVE_STRATEGIES[matched_index].target_difference_points / 2
+        ) {
+          return this.placeMarketOrder('PE', matched_index);
+        } else {
+          console.log(
+            `🚀 LTP gone higher than our entry. LTP: ${ltp}, Entry: ${PEEntry}`
+          );
+        }
       }
     } else {
       console.log(
